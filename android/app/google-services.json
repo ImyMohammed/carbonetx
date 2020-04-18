@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "594436063221",
+    "firebase_url": "https://carbonetx-5ba2c.firebaseio.com",
+    "project_id": "carbonetx-5ba2c",
+    "storage_bucket": "carbonetx-5ba2c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:594436063221:android:ae01b48602edb92c37aabc",
+        "android_client_info": {
+          "package_name": "com.carbonetx.carbonetx"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "594436063221-vpa0r6uvnaoveljd2gctinq827ps111d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOxWZh7agBAC36EgwkT56w--OTq8PFqKA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "594436063221-vpa0r6uvnaoveljd2gctinq827ps111d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "594436063221-fpn2marmilha07tllfk8o8npsnoouk9u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.carbonetx.carbonetx"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
