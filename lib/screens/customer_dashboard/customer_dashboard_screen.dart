@@ -604,16 +604,16 @@ class _CustomerDashboardState extends State<CustomerDashboard>
             ),
             PageTitle(),
             Container(
-              height: 350,
+              height: height * 0.51,
               width: width,
               child: Stack(
                 children: <Widget>[
                   Swiper(
                       indicatorLayout: PageIndicatorLayout.NONE,
-                      containerHeight: 300,
+                      containerHeight: height * 0.51,
                       containerWidth: width * 0.99,
                       itemWidth: width * 0.8,
-                      itemHeight: 370.0,
+                      itemHeight: height * 0.51,
                       layout: SwiperLayout.STACK,
                       viewportFraction: 1,
                       itemBuilder: (BuildContext context, int index) {
@@ -648,11 +648,11 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                             .changeInfo(index);
                       }),
                   Container(
-                      margin: EdgeInsets.fromLTRB(width * 0.14, 250, 0, 0),
+                      margin: EdgeInsets.fromLTRB(width * 0.14, height * 0.36, 0, 0),
                       child: CustomerDashboardInfo()),
                   Container(
                       width: 270,
-                      margin: EdgeInsets.fromLTRB(width * 0.14, 290, 50, 0),
+                      margin: EdgeInsets.fromLTRB(width * 0.14, height * 0.41, 50, 0),
                       child: DashboardSubtitle())
                 ],
               ),

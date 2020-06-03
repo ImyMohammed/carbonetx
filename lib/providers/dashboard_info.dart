@@ -8,6 +8,7 @@ class CustomerDashboardInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
     return Text(
         Provider.of<CustomerDashboardInfoData>(context, listen: true)
             .imageTitle,
@@ -46,13 +47,14 @@ class DashboardSubtitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
     return Text(
         Provider.of<DashboardSubtitleData>(context, listen: true).imageInfo,
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
           fontFamily: 'OpenSans',
-          fontSize: width * 0.03,
+          fontSize: height * 0.017,
           shadows: <Shadow>[
             Shadow(
               offset: Offset(0, 0),
