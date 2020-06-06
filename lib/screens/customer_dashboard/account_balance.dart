@@ -1,25 +1,11 @@
-import 'package:carbonetx/utilities/firebase/user_data.dart';
-import 'package:carbonetx/screens/customer_dashboard/stripe_card_element.dart';
+import 'package:carbonetx/screens/customer_dashboard/add_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
 import 'package:carbonetx/providers/title_data.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:toast/toast.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_swiper/flutter_swiper.dart';
-import 'package:carbonetx/screens/customer_dashboard/customer_dashboard_screen.dart';
-import 'package:flutter_page_indicator/flutter_page_indicator.dart';
-import 'package:carbonetx/providers/dashboard_info.dart';
-import 'package:provider/provider.dart';
-import 'package:carbonetx/utilities/book_button.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:carbonetx/utilities/network_Status.dart';
-import 'package:carbonetx/data/card_model.dart';
-import 'package:carbonetx/services/stripe.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:carbonetx/utilities/slide_route.dart';
-import 'package:carbonetx/utilities/bounce_route.dart';
 
 class AccountBalance extends StatefulWidget {
   static final AccountBalance _accountBalance = AccountBalance._internal();
@@ -36,8 +22,6 @@ class AccountBalance extends StatefulWidget {
 
 class _AccountBalanceState extends State<AccountBalance>
     with SingleTickerProviderStateMixin {
-  WebViewController _webController;
-
   double width;
   double height;
 
