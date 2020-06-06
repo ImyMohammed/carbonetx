@@ -42,6 +42,7 @@ class _StripeCardElementState extends State<StripeCardElement> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(
           'Add a Card',
@@ -53,13 +54,16 @@ class _StripeCardElementState extends State<StripeCardElement> {
         ),
         backgroundColor: Colors.black,
       ),
-      body: WebView(
-        initialUrl: "",
-        javascriptMode: JavascriptMode.unrestricted,
-        onWebViewCreated: (WebViewController view) {
-          _webViewController = view;
-          _loadHtmlFile();
-        },
+      body: Container(
+        color: Colors.black,
+        child: WebView(
+          initialUrl: "",
+          javascriptMode: JavascriptMode.unrestricted,
+          onWebViewCreated: (WebViewController view) {
+            _webViewController = view;
+            _loadHtmlFile();
+          },
+        ),
       ),
     );
   }

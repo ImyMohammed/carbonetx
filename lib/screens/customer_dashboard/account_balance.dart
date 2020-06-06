@@ -1,5 +1,5 @@
 import 'package:carbonetx/utilities/firebase/user_data.dart';
-import 'package:carbonetx/webviews/stripe_card_element.dart';
+import 'package:carbonetx/screens/customer_dashboard/stripe_card_element.dart';
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
 import 'package:carbonetx/providers/title_data.dart';
