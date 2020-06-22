@@ -14,7 +14,9 @@
 
 <div class="modal">
     <div class="modal-content">
+      <div id="closeButtonBar">
         <span class="close-button">×</span>
+      </div>
         <h1 id='message'></h1>
     </div>
 </div>
@@ -47,13 +49,17 @@
  * how you can use CSS to style your Element's container.
  */
 
+ #closeButtonBar {
+width: 100%;
+height: 50px;
+ }
  .modal {
     position: fixed;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     opacity: 0;
     visibility: hidden;
     transform: scale(1.1);
@@ -67,17 +73,19 @@
     background-color: rgb(46, 46, 46);
     padding: 1rem 1.5rem;
     width: 80%;
-    height: 13%;
+    height: 120px;
     border-radius: 0.5rem;
     font-Family: sans-serif;
     font-weight: 350;
     font-Size: 8px;
     text-align: center;
     color: #FF0362;
+    z-index: 100;
 }
 
 #message {
   margin-top: 0%;
+  padding-bottom: 150px;
 }
 
 .close-button {
@@ -208,6 +216,7 @@ height: 100%;
   box-shadow: 0 1px 3px 0 #000000;
   -webkit-transition: box-shadow 150ms ease;
   transition: box-shadow 150ms ease;
+  
 }
 
 
@@ -244,28 +253,32 @@ height: 100%;
 
 #userIcon {
   color: #75757d;
-  padding-left: 7px;
-  padding-top: 5px;
+  padding-left: 8px;
+  padding-top: 6px;
   float: left;
+  font-size: 20px;
 }
 
 input {
   float: left;
-  padding-left: 14px;
+  padding-left: 10px;
   outline: none;
   border: none;
+  color: #75757d;
 }
 
 
 
 input[type=text] {
   outline: none;
+  margin-top: 3px;
+  margin-bottom: 15px;
   width: 80%;
   color: #75757d;
   background-color: transparent;
   font-Family: sans-serif;
-    font-weight: 400;
-    font-Size: 18px;
+  font-weight: 400;
+  font-Size: 18px;
 }
 
 input::placeholder {
@@ -374,14 +387,20 @@ var modal = document.querySelector(".modal");
 var trigger = document.querySelector(".submit");
 var closeButton = document.querySelector(".close-button");
 
-var nameError = document.getElementById("name-element");
+var cardNameField = document.getElementById("name-element");
 
 function toggleModal() {
     modal.classList.toggle("show-modal");
 }
 
-function toggleNameError() {
-  nameError.classList.toggle("cardholderName--invalid");
+function cardNameError() {
+  cardNameField.classList.remove("cardholderName");
+  cardNameField.classList.add("cardholderName--invalid");
+}
+
+function cardNameValid() {
+  cardNameField.classList.remove("cardholderName--invalid");
+  cardNameField.classList.add("cardholderName");
 }
 
 function windowOnClick(event) {
@@ -417,12 +436,29 @@ function required(input)  {
      if (input.value.length == 0)
       { 
         console.log('empty'); 
-        toggleNameError();
+        cardNameError();
         return false; 
-      }  	
-      toggleNameError();
-      return true; 
-    } 
+      } else {
+        cardNameValid();
+        return validate(input);
+      } 
+      
+    };
+    
+function validate(input) {
+    var regName = /^[a-zA-Z]+ [a-zA-Z]+$/;
+    var name = input.value;
+    if (!regName.test(name)) {
+        document.getElementById('cardholderName').focus();
+        cardNameError();
+        console.log('name is not valid');
+        return false;
+    } else {
+      console.log('name is valid');
+      cardNameValid();
+        return true;
+    }
+};
 
 // Create a Stripe client.
 var stripe = Stripe('pk_test_WLmHAmiHtLPQLG3cqPlGAJl300Oig3PRep');
@@ -452,11 +488,14 @@ var cardStyle = {
 // Create an instance of the card Element.
 var card = elements.create('card', {style: cardStyle, hidePostalCode: true});
 
+
+
 // Add an instance of the card Element into the `card-element` <div>.
 card.mount('#card-element');
 
 // Handle real-time validation errors from the card Element.
 card.addEventListener('change', function(event) {
+
 
   var displayError = document.getElementById('card-errors');
   if (event.error) {
@@ -474,8 +513,11 @@ card.addEventListener('change', function(event) {
 var form = document.getElementById('payment-form');
 form.addEventListener('submit', function(event) {
   event.preventDefault();
-  required(cardHolderName);
-  stripe.createToken(card).then(function(result) {
+  if (required(cardHolderName) == false) {
+    var modalMessage = document.getElementById("message").innerHTML = "Enter your full name as it appears on your card.";
+    toggleModal();
+  } else {
+    stripe.createToken(card).then(function(result) {
     if (result.error) {
       // Inform the user if there was an error.
       var errorElement = document.getElementById('card-errors');
@@ -486,6 +528,8 @@ form.addEventListener('submit', function(event) {
       stripeTokenHandler(result.token);
     }
   });
+  }
+ 
 });
 
 // Submit the form with the token ID.
