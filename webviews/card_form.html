@@ -5,13 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
-<body>
+<body style="margin:0;">
+
+<div id="loader"></div>
   <script src="https://js.stripe.com/v3/"></script>
-<form action="/charge" method="post" id="payment-form">
-  <div class="form-row">
-    <label for="card-element">
-      Credit or debit card lol
-    </label>
+  
+  <script src="https://kit.fontawesome.com/384f553a54.js" crossorigin="anonymous"></script>
+
+<div class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h1 id='message'></h1>
+    </div>
+</div>
+
+  <i id='visa' class="fa fa-cc-visa" aria-hidden="true"></i>
+  <i id='mastercard' class="fa fa-cc-mastercard" aria-hidden="true"></i>
+  <i id='amex' class="fa fa-cc-amex" aria-hidden="true"></i>
+<div id='form'>
+<form action="/charge" method="post" style="display:none;" id="payment-form">
+  <div class="form-row">    
+    <div id="name-element" class="cardholderName">
+      <i id ="userIcon" class="fa fa-user icon"></i> 
+      <input type="text" id="cardholderName"  name="cardholderName" placeholder="Cardholder Name">
+    </div>
     <div id="card-element">
       <!-- A Stripe Element will be inserted here. -->
     </div>
@@ -20,8 +37,9 @@
     <div id="card-errors" role="alert"></div>
   </div>
 
-  <button>Submit Payment</button>
+  <button class='submit' id="submitButton">Add</button>
 </form>
+</div>
 <style>
 
   /**
@@ -29,12 +47,151 @@
  * how you can use CSS to style your Element's container.
  */
 
- html, body {
+ .modal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.1);
+    transition: visibility 0s linear 0.25s, opacity 0.25s 0s, transform 0.25s;
+}
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(46, 46, 46);
+    padding: 1rem 1.5rem;
+    width: 80%;
+    height: 13%;
+    border-radius: 0.5rem;
+    font-Family: sans-serif;
+    font-weight: 350;
+    font-Size: 8px;
+    text-align: center;
+    color: #FF0362;
+}
+
+#message {
+  margin-top: 0%;
+}
+
+.close-button {
+    float: right;
+    width: 1.5rem;
+    height: auto;
+    text-align: center;
+    cursor: pointer;
+    font-Size: 20px;
+    padding: 0.5%;
+    font-weight: 500;
+    border-radius: 0.25rem;
+    color: #000000;
+    background-color: #FF0362;
+}
+.close-button:hover {
+  color: #FF0362;
+    background-color: rgb(12, 12, 12);
+}
+.show-modal {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1.0);
+    transition: visibility 0s linear 0s, opacity 0.25s 0s, transform 0.25s;
+}
+
+ #visa{
+   float: left;
+   width:  30%;
+   height: auto;
+   margin-top: 10%;
+   margin-left: 5%;
+   display: none;
+ }
+
+ #mastercard{
+   float: left;
+   width:  30%;
+   height: auto;
+   margin-top: 10%;
+   display: none;
+
+ }
+
+ #amex{
+   float: left;
+   width:  30%;
+   height: auto;
+   margin-top: 10%;
+   margin-right: 5%;
+   display: none;
+
+ }
+
+.fa.fa-cc-visa {
+  width: 30%;
+  font-size: 50px;
+  text-align: center;
+  background: linear-gradient(270deg, #056ce1, #f0b707, #056ce1);
+    background-size: 600% 600%;
+    animation: iconGradient 20s ease infinite;
+
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    background-clip: inherit;
+}
+
+.fa.fa-cc-mastercard {
+  font-size: 50px;
+  text-align: center;
+
+  background: linear-gradient(270deg, #ff0000, #f0b707, #ff0000);
+    background-size: 600% 600%;
+    animation: iconGradient 20s ease infinite;
+
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    background-clip: inherit;
+}
+
+.fa.fa-cc-amex {
+  font-size: 50px;
+  text-align: center;
+
+  background: linear-gradient(270deg, #056ce1, #23e0ea, #0735f0);
+    background-size: 600% 600%;
+    animation: iconGradient 20s ease infinite;
+
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    background-clip: inherit;
+}
+
+@keyframes iconGradient {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+html{
+  background: linear-gradient(140deg, #FF0362 15%, #4D4A4A 0%, #212020 100%);
+margin:0;
+height: 100%;
+   width: auto;
+   background-attachment: fixed;
+   overflow: hidden;
+   background-repeat: no-repeat;
+
+}
+  body {
+   overflow: scroll;
    height: 100%;
    width: auto;
-   background: #FF004B;
-background: linear-gradient(140deg, #FF0362 15%, #4D4A4A 0%, #212020 100%);
-margin:0;
+   
  }
 .StripeElement {
   box-sizing: border-box;
@@ -46,19 +203,103 @@ margin:0;
   text-align: center;
   border: 1px solid transparent;
   border-radius: 4px;
-  background-color: rgb(235, 231, 231);
+  background-color: #212020;
 
-  box-shadow: 0 1px 3px 0 #e6ebf1;
+  box-shadow: 0 1px 3px 0 #000000;
   -webkit-transition: box-shadow 150ms ease;
   transition: box-shadow 150ms ease;
 }
 
+
+
+#name-element {
+  box-sizing: border-box;
+  margin: 3%;
+  width: 94%;
+  height: 60px;
+  text-align: left;
+  padding: 15px 15px 20px 5px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: #212020;
+  border-color: #212020;
+  color: #474747;
+  box-shadow: 0 1px 3px 0 #000000;
+  -webkit-transition: box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
+  font-Family: sans-serif;
+  font-weight: 350;
+  font-Size: 18px;
+}
+
+.cardholderName{
+  border: 1px solid transparent;
+  border-color: #212020;
+}
+
+.cardholderName--invalid {
+  border: 1px solid;
+  border-color: #F41357 !important; 
+}
+
+#userIcon {
+  color: #75757d;
+  padding-left: 7px;
+  padding-top: 5px;
+  float: left;
+}
+
+input {
+  float: left;
+  padding-left: 14px;
+  outline: none;
+  border: none;
+}
+
+
+
+input[type=text] {
+  outline: none;
+  width: 80%;
+  color: #75757d;
+  background-color: transparent;
+  font-Family: sans-serif;
+    font-weight: 400;
+    font-Size: 18px;
+}
+
+input::placeholder {
+  color: #75757d;
+}
+
+input:focus  {
+  outline: none;
+  border: none;
+}
+
+#submitButton {
+  float: right;
+  margin-right: 3%;
+  width: 120px;
+  height: 60px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: #F41357;
+  color: #2c2c2c;
+  box-shadow: 0 1px 3px 0 #000000;
+  -webkit-transition: box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
+  font-Family: sans-serif;
+  font-weight: bold;
+  font-Size: 18px;
+}
+
 .StripeElement--focus {
-  box-shadow: 0 1px 3px 0 #cfd7df;
+  box-shadow: 0 1px 3px 0 #3a3a3a;
 }
 
 .StripeElement--invalid {
-  border-color: #fa755a;
+  border-color: #F41357;
 }
 
 .StripeElement--webkit-autofill {
@@ -66,9 +307,122 @@ margin:0;
 }
 
 
+
+#form{
+  float: left;
+  width: 100%;
+  margin-top: 10%;
+}
+
+/* Center the loader */
+#loader {
+  position: fixed;
+  left: 45%;
+  top: 45%;
+  z-index: 1;
+  width: 30px;
+  height: 20px;
+  margin: 0;
+  border: 5px solid #212020;
+  border-radius: 50%;
+  border-top: 5px solid #F41357;
+  width: 32px;
+  height: 32px;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Add animation to "page content" */
+.animate-bottom {
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 0.2s
+}
+
+@-webkit-keyframes animatebottom {
+  from { bottom:-100px; opacity:0 }
+  to { bottom:0px; opacity:1 }
+}
+
+@keyframes animatebottom {
+  from{ bottom:-100px; opacity:0 }
+  to{ bottom:0; opacity:1 }
+}
+
+#payment-form {
+  display: none;
+  text-align: center;
+}
+
 </style>
 
 <script>
+
+var modal = document.querySelector(".modal");
+var trigger = document.querySelector(".submit");
+var closeButton = document.querySelector(".close-button");
+
+var nameError = document.getElementById("name-element");
+
+function toggleModal() {
+    modal.classList.toggle("show-modal");
+}
+
+function toggleNameError() {
+  nameError.classList.toggle("cardholderName--invalid");
+}
+
+function windowOnClick(event) {
+    if (event.target === modal) {
+        toggleModal();
+    }
+}
+
+closeButton.addEventListener("click", toggleModal);
+window.addEventListener("click", windowOnClick);
+
+var cardHolderName = document.getElementById('cardholderName');
+
+
+
+function showPage() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("payment-form").style.display = "block";
+  document.getElementById("visa").style.display = "block";
+  document.getElementById("mastercard").style.display = "block";
+  document.getElementById("amex").style.display = "block";
+}
+
+window.addEventListener("load", function(){
+    console.log('page loaded');
+    var myVar;
+    myVar = setTimeout(showPage, 500);
+    
+});
+
+function required(input)  {
+  
+     if (input.value.length == 0)
+      { 
+        console.log('empty'); 
+        toggleNameError();
+        return false; 
+      }  	
+      toggleNameError();
+      return true; 
+    } 
 
 // Create a Stripe client.
 var stripe = Stripe('pk_test_WLmHAmiHtLPQLG3cqPlGAJl300Oig3PRep');
@@ -78,7 +432,7 @@ var elements = stripe.elements();
 
 // Custom styling can be passed to options when creating an Element.
 // (Note that this demo uses a wider set of styles than the guide below.)
-var style = {
+var cardStyle = {
   base: {
     color: '#75757d',
     fontFamily: 'sans-serif',
@@ -87,7 +441,7 @@ var style = {
     '::placeholder': {
       color: '#75757d'
     },
-    iconColor: 'e81c48',
+    iconColor: '#FFFFFF',
   },
   invalid: {
     color: '#e81c48',
@@ -96,16 +450,21 @@ var style = {
 };
 
 // Create an instance of the card Element.
-var card = elements.create('card', {style: style, hidePostalCode: true});
+var card = elements.create('card', {style: cardStyle, hidePostalCode: true});
 
 // Add an instance of the card Element into the `card-element` <div>.
 card.mount('#card-element');
 
 // Handle real-time validation errors from the card Element.
 card.addEventListener('change', function(event) {
+
   var displayError = document.getElementById('card-errors');
   if (event.error) {
-    displayError.textContent = event.error.message;
+    var modalMessage = document.getElementById("message").innerHTML = event.error.message;
+    
+   // displayError.textContent = event.error.message;
+    
+
   } else {
     displayError.textContent = '';
   }
@@ -115,12 +474,13 @@ card.addEventListener('change', function(event) {
 var form = document.getElementById('payment-form');
 form.addEventListener('submit', function(event) {
   event.preventDefault();
-
+  required(cardHolderName);
   stripe.createToken(card).then(function(result) {
     if (result.error) {
       // Inform the user if there was an error.
       var errorElement = document.getElementById('card-errors');
-      errorElement.textContent = result.error.message;
+      //errorElement.textContent = result.error.message;
+      toggleModal();
     } else {
       // Send the token to your server.
       stripeTokenHandler(result.token);

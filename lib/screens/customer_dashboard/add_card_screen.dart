@@ -21,7 +21,6 @@ class StripeCardElement extends StatefulWidget {
 
 class _StripeCardElementState extends State<StripeCardElement> {
   WebViewController _webViewController;
-
   String cardFormPagePath = 'webviews/card_form.html';
 
   @override
@@ -37,9 +36,14 @@ class _StripeCardElementState extends State<StripeCardElement> {
         .toString());
   }
 
+  void vibrate() {
+    HapticFeedback.lightImpact();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomPadding: false,
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(
