@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:carbonetx/constants/constants.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,23 +22,13 @@ class StripeCardElement extends StatefulWidget {
 
 class _StripeCardElementState extends State<StripeCardElement> {
   WebViewController _webViewController;
-  String cardFormPagePath = 'webviews/card_form.html';
+  String cardFormUrl = 'https://carbonetx-5ba2c.firebaseapp.com';
 
   @override
   void initState() {
     super.initState();
-  }
-
-  _loadHtmlFile() async {
-    print('Triggered');
-    String fileContents = await rootBundle.loadString(cardFormPagePath);
-    _webViewController.loadUrl(Uri.dataFromString(fileContents,
-            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
-        .toString());
-  }
-
-  void vibrate() {
-    HapticFeedback.lightImpact();
+    print(
+        "$cardFormUrl/?email=${UserData().email}&custID=${UserData().stripeID}&userID=${UserData().userId}");
   }
 
   @override
@@ -59,11 +50,11 @@ class _StripeCardElementState extends State<StripeCardElement> {
       body: Container(
         color: Colors.black,
         child: WebView(
-          initialUrl: "",
+          initialUrl:
+              "$cardFormUrl/?email=${UserData().email}&custID=${UserData().stripeID}&userID=${UserData().userId}",
           javascriptMode: JavascriptMode.unrestricted,
           onWebViewCreated: (WebViewController view) {
             _webViewController = view;
-            _loadHtmlFile();
           },
         ),
       ),

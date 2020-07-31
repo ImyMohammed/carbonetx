@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
+import 'package:flutter/services.dart';
 import 'package:toast/toast.dart';
 import 'package:carbonetx/screens/customer_dashboard/customer_dashboard_screen.dart';
 
@@ -55,6 +56,7 @@ class _BookButtonState extends State<BookButton>
           borderRadius: new BorderRadius.circular(30.0),
         ),
         onPressed: () {
+          HapticFeedback.lightImpact();
           if (CustomerDashboard.regSelected == null) {
             Toast.show("Select a car", context,
                 textColor: kCrimson, gravity: Toast.TOP);

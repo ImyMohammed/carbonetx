@@ -1,5 +1,6 @@
 import 'package:carbonetx/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:toast/toast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -136,6 +137,7 @@ class LogOutButton extends StatelessWidget {
             .changeTitle(0);
         Provider.of<DashboardSubtitleData>(context, listen: false)
             .changeInfo(0);
+        HapticFeedback.mediumImpact();
         Toast.show(
           'Logged out.',
           context,

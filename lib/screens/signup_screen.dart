@@ -1,3 +1,4 @@
+import 'package:carbonetx/data/user_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:loading/indicator/line_scale_pulse_out_indicator.dart';
 import 'package:loading/loading.dart';
 import 'package:flutter_keychain/flutter_keychain.dart';
+import 'package:carbonetx/services/stripe.dart';
 
 class SignupScreen extends StatefulWidget {
   static const String id = 'signup_screen';
@@ -106,6 +108,7 @@ class _SignupScreenState extends State<SignupScreen> {
             keyboardType: TextInputType.text,
             onChanged: (value) {
               name = value;
+              HapticFeedback.lightImpact();
             },
             style: TextStyle(
               color: Colors.black,
@@ -152,6 +155,7 @@ class _SignupScreenState extends State<SignupScreen> {
             onChanged: (value) {
               email = value;
               _emailController.text.replaceAll(RegExp(r"\s "), "");
+              HapticFeedback.lightImpact();
             },
             style: TextStyle(
               color: textColor,
@@ -191,6 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
             keyboardType: TextInputType.number,
             onChanged: (value) {
               mobileNumber = value;
+              HapticFeedback.lightImpact();
             },
             inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
             style: TextStyle(
@@ -230,6 +235,7 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: _passwordController,
             onChanged: (value) {
               password = value;
+              HapticFeedback.lightImpact();
             },
             obscureText: true,
             style: TextStyle(
@@ -300,6 +306,7 @@ class _SignupScreenState extends State<SignupScreen> {
       child: RaisedButton(
         elevation: 5.0,
         onPressed: () async {
+          HapticFeedback.mediumImpact();
           if (mounted)
             setState(() {
               showSpinner = true;
@@ -308,16 +315,19 @@ class _SignupScreenState extends State<SignupScreen> {
             try {
               final userLoggedIn = await _auth.createUserWithEmailAndPassword(
                   email: email, password: password);
+              print(userLoggedIn.user.uid);
               if (userLoggedIn != null) {
-                _fireStore.collection('users').document(email).setData({
-                  'accountType': 'customer',
-                  'email': '$email',
-                  'mobileNumber': 'Enter your Mob No.',
-                  'name': '$name',
-                });
+                String stripeId = await StripeServices().createStripeCustomer(
+                    email: email,
+                    name: name,
+                    description: 'Account created via CarbonEtx App.');
+                await UserData().saveUserDetails(
+                    userLoggedIn.user.uid, email, name, stripeId);
+                await UserData().getData(userLoggedIn.user.uid);
                 HapticFeedback.lightImpact();
                 FlutterKeychain.put(key: "carbonetx_email", value: email);
                 FlutterKeychain.put(key: "carbonetx_password", value: password);
+
                 /*email = null;
                 password = null;
                 name = null;*/
@@ -337,8 +347,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 'Registration successful!',
                 context,
                 duration: Toast.LENGTH_LONG,
-                gravity: Toast.BOTTOM,
-                textColor: Color(0xFF03BEFF),
+                gravity: Toast.TOP,
+                textColor: Colors.greenAccent,
               );
             } catch (error) {
               errorMessage = error.toString();
@@ -425,7 +435,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildSignupBtn() {
     return GestureDetector(
-      onTap: () => print('Sign Up Button Pressed'),
+      onTap: () => HapticFeedback.lightImpact(),
       child: RichText(
         text: TextSpan(
           children: [
@@ -478,9 +488,9 @@ class _SignupScreenState extends State<SignupScreen> {
         Scaffold(
           backgroundColor: Colors.transparent,
           body: ModalProgressHUD(
-            progressIndicator: Loading(
-              indicator: LineScalePulseOutIndicator(),
-              color: kCrimson,
+            progressIndicator: CircularProgressIndicator(
+              backgroundColor: Color(0xFF3A3A39),
+              valueColor: new AlwaysStoppedAnimation<Color>(kCrimson),
             ),
             inAsyncCall: showSpinner,
             color: Colors.black,

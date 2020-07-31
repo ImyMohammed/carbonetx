@@ -20,7 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:loading/loading.dart';
 import 'package:loading/indicator/line_scale_pulse_out_indicator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:carbonetx/utilities/firebase/user_data.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'package:carbonetx/providers/loading_bar.dart';
 import 'package:carbonetx/providers/customer_menu_Navigation.dart';
 import 'package:carbonetx/utilities/network_Status.dart';
@@ -41,9 +41,6 @@ class CustomerProfile extends StatefulWidget {
 
 class _CustomerProfileState extends State<CustomerProfile>
     with SingleTickerProviderStateMixin {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = Firestore.instance;
-
   Color verifiedColour;
   IconData verifyIcon;
 
@@ -52,11 +49,6 @@ class _CustomerProfileState extends State<CustomerProfile>
 
   var _numberController = TextEditingController();
   var _smsController = TextEditingController();
-
-  int curUserId;
-  String name = UserData.name;
-  String email = UserData.email;
-  String mobileNumber = UserData.mobileNumber;
 
   double width;
 
@@ -70,9 +62,12 @@ class _CustomerProfileState extends State<CustomerProfile>
       Provider.of<LoadingOnOff>(context, listen: false).loadingOff();
       // Add Your Code here.
       checkMobNumber();
+      print('Uid is ${UserData().userId}');
     });
     instance++;
     print('Instance $instance');
+    print(UserData().userId);
+
     _refresh();
   }
 
@@ -88,7 +83,7 @@ class _CustomerProfileState extends State<CustomerProfile>
   }
 
   void checkMobNumber() async {
-    if (mobileNumber != 'Enter your Mob No.') {
+    if (UserData().mobNumber != 'Enter your Mob No.') {
       verifiedColour = Colors.greenAccent;
       verifyIcon = FontAwesomeIcons.check;
       Provider.of<CustomerDashboardData>(context, listen: false)
@@ -103,10 +98,10 @@ class _CustomerProfileState extends State<CustomerProfile>
     }
   }
 
-  Future updateMobileNumber(String mobileNumber, String userEmail) async {
+  Future updateMobileNumber(String mobileNumber, String userId) async {
     await Firestore.instance
         .collection('users')
-        .document(userEmail)
+        .document(userId)
         .updateData({'mobileNumber': mobileNumber}).then((value) {});
   }
 
@@ -172,7 +167,7 @@ class _CustomerProfileState extends State<CustomerProfile>
                 minWidth: 100,
                 color: Color(0xFFFF0362),
                 elevation: 5.0,
-                child: mobileNumber == 'Enter your Mob No.'
+                child: UserData().mobNumber == 'Enter your Mob No.'
                     ? Text(
                         'SAVE',
                         style: TextStyle(
@@ -194,19 +189,20 @@ class _CustomerProfileState extends State<CustomerProfile>
                 textColor: Colors.black,
                 onPressed: () {
                   print('reset');
-                  mobileNumber = newNumber;
                   Navigator.pop(context);
-                  print(mobileNumber);
+                  print(UserData().mobNumber);
                   print(newNumber.length);
-                  if (newNumber == "" ||
-                      newNumber.length <= 10 ||
-                      newNumber == 'Enter your Mob No.') {
-                    mobileNumber = 'Enter your Mob No.';
-                    UserData.addMobileNumber('Enter your Mob No.', email);
-                    mobileNumber = 'Enter your Mob No.';
+                  if (newNumber == "" || newNumber.length <= 10) {
+                    UserData().updateNumber = 'Enter your Mob No.';
+                    UserData().addMobileNumber(
+                        'Enter your Mob No.', UserData().userId);
+                    print('mobile add ${UserData().userId}');
+
+                    newNumber = 'Enter your Mob No.';
                     verifiedColour = kYellow;
                     verifyIcon = FontAwesomeIcons.exclamationTriangle;
                     _numberController.clear();
+                    print('cleared');
                     setState(() {});
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       Provider.of<CustomerDashboardData>(context, listen: false)
@@ -215,15 +211,15 @@ class _CustomerProfileState extends State<CustomerProfile>
                       // Add Your Code here.
                     });
                   } else {
-                    UserData.addMobileNumber(mobileNumber, email);
-                    mobileNumber = newNumber;
+                    UserData().updateNumber = newNumber;
+                    UserData().addMobileNumber(newNumber, UserData().userId);
+                    print('Updated');
                     verifyIcon = FontAwesomeIcons.check;
                     verifiedColour = Colors.greenAccent;
                     setState(() {});
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       Provider.of<CustomerDashboardData>(context, listen: false)
                           .profileWarningOff();
-
                       // Add Your Code here.
                     });
                   }
@@ -378,10 +374,13 @@ class _CustomerProfileState extends State<CustomerProfile>
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[LogOutButton()],
               ),
-              PageTitle(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
+              ),
+              Stack(children: <Widget>[PageTitle()]),
               Card(
                 color: Colors.black54,
                 margin: EdgeInsets.fromLTRB(16, 30, 16, 16),
@@ -397,7 +396,7 @@ class _CustomerProfileState extends State<CustomerProfile>
                       ),
                     ),
                     Text(
-                      '$name',
+                      UserData().name,
                       style: TextStyle(
                           color: Colors.grey,
                           fontFamily: 'OpenSans',
@@ -424,7 +423,7 @@ class _CustomerProfileState extends State<CustomerProfile>
                     ),
                     Expanded(
                       child: AutoSizeText(
-                        '$email',
+                        '${UserData().email}',
                         maxLines: 1,
                         minFontSize: 5,
                         maxFontSize: 18,
@@ -468,7 +467,7 @@ class _CustomerProfileState extends State<CustomerProfile>
                         ),
                       ),
                       Text(
-                        '$mobileNumber',
+                        UserData().mobNumber,
                         style: TextStyle(
                             color: Colors.grey,
                             fontFamily: 'OpenSans',

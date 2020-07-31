@@ -1,7 +1,6 @@
 import 'package:carbonetx/constants/constants.dart';
 import 'package:carbonetx/screens/customer_dashboard/dropby_scheduled.dart';
-import 'package:carbonetx/utilities/firebase/user_data.dart';
-import 'package:carbonetx/utilities/globals.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,9 +42,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = Firestore.instance;
-
   static final customerDashboardPage = CustomerDashboard();
   static final dropByScheduledPage = DropByScheduled();
   static final referralsPage = Referrals();
@@ -74,18 +70,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
 
-    getCurrentUser();
-    userData.currentUser();
-    print(images);
-
-    /*WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<LoadingOnOff>(context, listen: false).loading();
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        Provider.of<LoadingOnOff>(context, listen: false).loading();
-      });
-    });*/
     print(userSession);
-    //saveSession();
+    saveSession();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => checkMobNumber(context));
   }
 
   void saveSession() async {
@@ -93,29 +81,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     print('Session saved');
   }
 
-  void checkMobNumber() async {
-    if (UserData.mobileNumber != 'Enter your Mob No.') {
+  Future checkMobNumber(BuildContext context) async {
+    if (UserData().mobNumber != null) {
       Provider.of<CustomerDashboardData>(context, listen: false)
           .profileWarningOff();
-      setState(() {});
     } else {
       Provider.of<CustomerDashboardData>(context, listen: false)
           .profileWarningOn();
-      setState(() {});
-    }
-  }
-
-  void getCurrentUser() async {
-    try {
-      final user = await _auth.currentUser();
-      if (user != null) {
-        loggedInUser = user;
-        print(loggedInUser.email);
-        saveSession();
-        checkMobNumber();
-      }
-    } catch (error) {
-      print(error);
     }
   }
 

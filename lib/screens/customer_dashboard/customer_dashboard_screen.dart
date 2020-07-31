@@ -10,7 +10,7 @@ import 'package:flutter_page_indicator/flutter_page_indicator.dart';
 import 'package:carbonetx/providers/dashboard_info.dart';
 import 'package:provider/provider.dart';
 import 'package:carbonetx/utilities/book_button.dart';
-import 'package:carbonetx/utilities/firebase/user_data.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -40,9 +40,11 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   final _scrollController = ScrollController();
 
   var carRegArray = [];
-  var carsNo;
+  int carsNo = 0;
 
   var isCheckedBool = [];
+
+  bool dataLoaded = false;
 
   double width;
   double height;
@@ -54,20 +56,18 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   @override
   void initState() {
     super.initState();
-    _refresh();
     //NetworkStatus().checkConnectivity(context);
+    if (dataLoaded == true) {
+      print("reload");
+      _reloadCars();
+    }
   }
 
-  _refresh() {
-    if (UserData.dataLoaded == false) {
-      Timer(Duration(seconds: 1), () {
-        _refresh();
-        setState(() {});
-      });
-    } else {
-      print('Data loaded ${UserData.dataLoaded}');
-      print(UserData.stripeID);
-    }
+  _reloadCars() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _buildStream();
+      setState(() {});
+    });
   }
 
   bool _checkCar(String regNo) {
@@ -98,6 +98,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                 backgroundColor: Colors.black54,
                 splashColor: kCrimson,
                 onPressed: () {
+                  HapticFeedback.lightImpact();
                   print('add car');
                   _addCar();
                 },
@@ -121,7 +122,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
     return StreamBuilder<QuerySnapshot>(
         stream: Firestore.instance
             .collection('users')
-            .document(UserData.email)
+            .document(UserData().userId)
             .collection('cars')
             .snapshots(),
         builder: (context, snapshot) {
@@ -141,7 +142,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
           List<Container> carNames = [];
           carRegArray.clear();
 
-          UserData.dataLoaded = true;
+          dataLoaded = true;
 
           for (var carMake in cars) {
             final carBrand = carMake.data['carMake'];
@@ -153,6 +154,8 @@ class _CustomerDashboardState extends State<CustomerDashboard>
 
             carRegArray.add(regNo);
             isCheckedBool.add(false);
+
+            print(carRegArray);
 
             var pos = carRegArray.indexWhere((pos) => pos.startsWith('$regNo'));
             final carWidget = Container(
@@ -278,6 +281,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                     CustomerDashboard.regSelected = regNo;
                     print('Reg selected $regNo');
                     print(carRegArray);
+                    HapticFeedback.mediumImpact();
                     Toast.show(
                       '$carBrand $carModel selected!',
                       context,
@@ -309,6 +313,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   }
 
   _addCar() {
+    print('cars no is $carsNo');
     return showDialog(
         context: context,
         builder: (context) {
@@ -344,8 +349,12 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                         child: TextField(
                           inputFormatters: [],
                           controller: _carMakeTC,
+                          textCapitalization: TextCapitalization.sentences,
                           keyboardType: TextInputType.text,
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            print(_carMakeTC.text);
+                            HapticFeedback.lightImpact();
+                          },
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'OpenSans',
@@ -375,9 +384,13 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                         padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
                         child: TextField(
                           inputFormatters: [],
+                          textCapitalization: TextCapitalization.sentences,
                           controller: _carModelTC,
                           keyboardType: TextInputType.text,
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            print(_carModelTC.text);
+                            HapticFeedback.lightImpact();
+                          },
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'OpenSans',
@@ -408,8 +421,12 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                         child: TextField(
                           inputFormatters: [],
                           controller: _carRegTC,
+                          textCapitalization: TextCapitalization.characters,
                           keyboardType: TextInputType.text,
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            print(_carRegTC.text);
+                            HapticFeedback.lightImpact();
+                          },
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'OpenSans',
@@ -460,43 +477,20 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                       gravity: Toast.TOP,
                       textColor: kCrimson,
                     );
-                    HapticFeedback.mediumImpact();
+                    HapticFeedback.lightImpact();
+                    print(carRegArray);
                   } else {
                     print('save car');
-
                     Navigator.pop(context);
-
-                    /*
-                    UserData.addCar(UserData.email, _carMakeTC.text,
-                        _carModelTC.text, _carRegTC.text);
-                    */
-
-                    /* var data = <String, dynamic>{
-                      'carMake': _carMakeTC.text,
-                      'carModel': _carModelTC.text,
-                      'regNo': _carRegTC.text,
-                      'email': UserData.email
-                    };*/
-
-                    //_addCardWithCloud(data);
-
-                    CloudFunctions.instance
-                        .getHttpsCallable(functionName: 'addCar')
-                        .call(<String, dynamic>{
-                      'carMake': _carMakeTC.text,
-                      'carModel': _carModelTC.text,
-                      'regNo': _carRegTC.text,
-                      'email': UserData.email
-                    }).then((result) {
-                      print(result.data['message']);
-                    });
-
+                    UserData().addCar(
+                        _carMakeTC.text, _carModelTC.text, _carRegTC.text);
                     for (var i = 0; i < carsNo; i++) {
                       isCheckedBool[i] = false;
                     }
                     _carModelTC.clear();
                     _carMakeTC.clear();
                     _carRegTC.clear();
+                    setState(() {});
                   }
                 },
               )
@@ -505,16 +499,16 @@ class _CustomerDashboardState extends State<CustomerDashboard>
         });
   }
 
-  _addCardWithCloud(dynamic params) async {
-    HttpsCallable addCar = CloudFunctions.instance.getHttpsCallable(
-      functionName: 'addCard',
-    );
-
-    try {
-      HttpsCallableResult response = await addCar.call(params);
-    } catch (e) {
-      print(e);
+  bool _checkReg(String regToAdd) {
+    bool regExists = false;
+    for (var reg in carRegArray) {
+      if (reg == carRegArray) {
+        regExists = true;
+      } else {
+        regExists = false;
+      }
     }
+    return regExists;
   }
 
   _deleteCar() {
@@ -564,7 +558,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                   onPressed: () {
                     print('removed');
                     Navigator.pop(context);
-                    UserData.deleteCar(UserData.email, _carRegNo);
+                    UserData().deleteCar(_carRegNo);
                     Toast.show(
                       'Removed!',
                       context,
@@ -573,6 +567,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                       textColor: kCrimson,
                     );
                     HapticFeedback.lightImpact();
+                    setState(() {});
                   },
                 ),
               )
@@ -585,8 +580,6 @@ class _CustomerDashboardState extends State<CustomerDashboard>
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
-    print('height $height');
-    print('width $width');
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -598,11 +591,13 @@ class _CustomerDashboardState extends State<CustomerDashboard>
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[LogOutButton()],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
             ),
             PageTitle(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+            ),
             Container(
               height: height * 0.51,
               width: width,
@@ -639,7 +634,6 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                       autoplayDisableOnInteraction: true,
                       autoplayDelay: 5000,
                       onIndexChanged: (int index) {
-                        print(index);
                         Provider.of<CustomerDashboardInfoData>(context,
                                 listen: false)
                             .changeTitle(index);
@@ -648,16 +642,24 @@ class _CustomerDashboardState extends State<CustomerDashboard>
                             .changeInfo(index);
                       }),
                   Container(
-                      margin: EdgeInsets.fromLTRB(width * 0.14, height * 0.36, 0, 0),
+                      margin: EdgeInsets.fromLTRB(
+                          width * 0.14, height * 0.36, 0, 0),
                       child: CustomerDashboardInfo()),
                   Container(
                       width: 270,
-                      margin: EdgeInsets.fromLTRB(width * 0.14, height * 0.41, 50, 0),
+                      margin: EdgeInsets.fromLTRB(
+                          width * 0.14, height * 0.41, 50, 0),
                       child: DashboardSubtitle())
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+            ),
             BookButton(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(15, 20, 100, 0),
               child: Text(
@@ -683,6 +685,7 @@ class _CustomerDashboardState extends State<CustomerDashboard>
             ),
             _addCarButton(),
             _buildStream(),
+            Padding(padding: const EdgeInsets.fromLTRB(0, 0, 0, 50))
           ],
         ),
       ),

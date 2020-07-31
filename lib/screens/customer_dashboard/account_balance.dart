@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:carbonetx/screens/customer_dashboard/add_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
@@ -6,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:toast/toast.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:carbonetx/data/user_data.dart';
 
 class AccountBalance extends StatefulWidget {
   static final AccountBalance _accountBalance = AccountBalance._internal();
@@ -25,6 +29,10 @@ class _AccountBalanceState extends State<AccountBalance>
   double width;
   double height;
 
+  bool dataLoaded = false;
+
+  bool cardSelected = false;
+
   void toast(String message) {
     Toast.show(
       message,
@@ -39,6 +47,22 @@ class _AccountBalanceState extends State<AccountBalance>
   void initState() {
     super.initState();
     //NetworkStatus().checkConnectivity(context);
+    //_getCard();
+    print('hello');
+  }
+
+  _delete() async {
+    await for (var snapshot in Firestore.instance
+        .collection('users')
+        .document(UserData().userId)
+        .collection('card')
+        .where('userId', isEqualTo: UserData().userId)
+        .snapshots()) {
+      for (DocumentSnapshot data in snapshot.documents) {
+        data.reference.delete();
+      }
+      print('deleted');
+    }
   }
 
   _buildGenerateCode() {
@@ -143,6 +167,182 @@ class _AccountBalanceState extends State<AccountBalance>
     HapticFeedback.lightImpact();
   }
 
+/*  Future<Map> getCard(String userId) async {
+    Map card = Map<String, String>();
+    print('get card data');
+    print('userId of card holder is $userId');
+    await for (var snapshot in Firestore.instance
+        .collection('users')
+        .document(UserData().userId)
+        .collection('card')
+        .where('userId', isEqualTo: UserData().userId)
+        .snapshots()) {
+      for (var messages in snapshot.documents) {
+        print(messages.data);
+        print(messages.data['brand']);
+        card = {'brand': messages.data['brand']};
+        card = {'userId': messages.data['userId']};
+        card = {'last4': messages.data['last4']};
+        card = {'expiryDate': messages.data['expiryDate']};
+        print(card['brand']);
+      }
+      print('Finished');
+
+      return card;
+    }
+  }*/
+
+  _buildStream() {
+    return StreamBuilder<QuerySnapshot>(
+        stream: Firestore.instance
+            .collection('users')
+            .document(UserData().userId)
+            .collection('card')
+            .where('userId', isEqualTo: UserData().userId)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(
+              child: Text(
+                'No card added',
+                style: kLabelStyle,
+              ),
+            );
+          }
+
+          final card = snapshot.data.documents;
+          print('has data ${!snapshot.hasData}');
+          List<Container> cards = [];
+
+          dataLoaded = true;
+
+          for (var cardDetails in card) {
+            final cardBrand = cardDetails.data['brand'];
+            final last4 = cardDetails.data['last4'];
+            final expMonth = cardDetails.data['expMonth'];
+
+            print(cardDetails.data);
+
+            print("Card data is loaded");
+
+            final cardWidget = Container(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(5, 10, 5, 0),
+                child: RaisedButton(
+                  disabledTextColor: Colors.greenAccent,
+                  color: Colors.black45,
+                  splashColor: kCrimson,
+                  elevation: 8,
+                  clipBehavior: Clip.antiAlias,
+                  shape: new RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(12.0),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+                        child: Column(
+                          children: <Widget>[
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                              child: Icon(
+                                FontAwesomeIcons.ccVisa,
+                                size: 18,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'XXXX XXXX XXXX $last4',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'OpenSans',
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                              child: Stack(
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.all(18.0),
+                                    child: Visibility(
+                                      visible:
+                                          cardSelected == false ? true : false,
+                                      child: Icon(
+                                        FontAwesomeIcons.check,
+                                        size: 18,
+                                        color: Colors.greenAccent,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(18.0),
+                                    child: Visibility(
+                                      visible:
+                                          cardSelected == true ? true : false,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          print('Delete');
+                                        },
+                                        child: Icon(
+                                          FontAwesomeIcons.trash,
+                                          size: 18,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                  onPressed: () {
+                    cardSelected = !cardSelected;
+                    HapticFeedback.mediumImpact();
+                    Toast.show(
+                      '$cardBrand $last4 selected!',
+                      context,
+                      duration: Toast.LENGTH_LONG,
+                      gravity: Toast.TOP,
+                      textColor: Colors.greenAccent,
+                    );
+
+                    setState(() {});
+                  },
+                  onLongPress: () {
+                    _delete();
+                    print('Long press');
+                  },
+                ),
+              ),
+            );
+            cards.add(cardWidget);
+          }
+
+          return Column(children: cards);
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
@@ -167,9 +367,8 @@ class _AccountBalanceState extends State<AccountBalance>
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[LogOutButton()],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
                     ),
                     PageTitle(),
                     Card(
@@ -207,6 +406,8 @@ class _AccountBalanceState extends State<AccountBalance>
                     ),
                     _cardsTitle(),
                     _addCardButton(),
+                    Padding(padding: const EdgeInsets.fromLTRB(0, 20, 0, 0)),
+                    _buildStream(),
                   ],
                 ),
               ],

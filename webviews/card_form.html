@@ -21,11 +21,12 @@
     </div>
 </div>
 
+
   <i id='visa' class="fa fa-cc-visa" aria-hidden="true"></i>
   <i id='mastercard' class="fa fa-cc-mastercard" aria-hidden="true"></i>
   <i id='amex' class="fa fa-cc-amex" aria-hidden="true"></i>
 <div id='form'>
-<form action="/charge" method="post" style="display:none;" id="payment-form">
+<form action="/" method="post" style="display:none;" id="payment-form">
   <div class="form-row">    
     <div id="name-element" class="cardholderName">
       <i id ="userIcon" class="fa fa-user icon"></i> 
@@ -50,9 +51,11 @@
  */
 
  #closeButtonBar {
-width: 100%;
-height: 50px;
+  width: 100%;
+  height: 50px;
  }
+
+
  .modal {
     position: fixed;
     left: 0;
@@ -65,6 +68,7 @@ height: 50px;
     transform: scale(1.1);
     transition: visibility 0s linear 0.25s, opacity 0.25s 0s, transform 0.25s;
 }
+
 .modal-content {
     position: absolute;
     top: 50%;
@@ -80,7 +84,6 @@ height: 50px;
     font-Size: 8px;
     text-align: center;
     color: #FF0362;
-    z-index: 100;
 }
 
 #message {
@@ -150,7 +153,6 @@ height: 50px;
 
     -webkit-text-fill-color: transparent;
     -webkit-background-clip: text;
-    background-clip: inherit;
 }
 
 .fa.fa-cc-mastercard {
@@ -163,7 +165,6 @@ height: 50px;
 
     -webkit-text-fill-color: transparent;
     -webkit-background-clip: text;
-    background-clip: inherit;
 }
 
 .fa.fa-cc-amex {
@@ -171,12 +172,12 @@ height: 50px;
   text-align: center;
 
   background: linear-gradient(270deg, #056ce1, #23e0ea, #0735f0);
+  background: -webkit-linear-gradient(270deg, #056ce1, #23e0ea, #0735f0);
     background-size: 600% 600%;
     animation: iconGradient 20s ease infinite;
 
     -webkit-text-fill-color: transparent;
     -webkit-background-clip: text;
-    background-clip: inherit;
 }
 
 @keyframes iconGradient {
@@ -265,9 +266,12 @@ input {
   outline: none;
   border: none;
   color: #75757d;
+  background-color: transparent;
 }
 
-
+input:-internal-autofill-selected {
+  background-color: transparent !important;
+}
 
 input[type=text] {
   outline: none;
@@ -319,7 +323,9 @@ input:focus  {
   background-color: #fefde5 !important;
 }
 
-
+#cardholderName {
+  background-color: transparent;
+}
 
 #form{
   float: left;
@@ -383,6 +389,9 @@ input:focus  {
 
 <script>
 
+//var modal = document.querySelector(".modalLoader");
+
+
 var modal = document.querySelector(".modal");
 var trigger = document.querySelector(".submit");
 var closeButton = document.querySelector(".close-button");
@@ -422,6 +431,14 @@ function showPage() {
   document.getElementById("visa").style.display = "block";
   document.getElementById("mastercard").style.display = "block";
   document.getElementById("amex").style.display = "block";
+}
+
+function showModalLoader() {
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("payment-form").style.display = "none";
+  document.getElementById("visa").style.display = "none";
+  document.getElementById("mastercard").style.display = "none";
+  document.getElementById("amex").style.display = "none";
 }
 
 window.addEventListener("load", function(){
@@ -512,7 +529,7 @@ card.addEventListener('change', function(event) {
 // Handle form submission.
 var form = document.getElementById('payment-form');
 form.addEventListener('submit', function(event) {
-  event.preventDefault();
+
   if (required(cardHolderName) == false) {
     var modalMessage = document.getElementById("message").innerHTML = "Enter your full name as it appears on your card.";
     toggleModal();
@@ -520,10 +537,13 @@ form.addEventListener('submit', function(event) {
     stripe.createToken(card).then(function(result) {
     if (result.error) {
       // Inform the user if there was an error.
+      console.log(result.error);
       var errorElement = document.getElementById('card-errors');
       //errorElement.textContent = result.error.message;
       toggleModal();
     } else {
+      showModalLoader();
+
       // Send the token to your server.
       stripeTokenHandler(result.token);
     }
@@ -544,6 +564,7 @@ function stripeTokenHandler(token) {
 
   // Submit the form
   form.submit();
+
 }
 
 </script>

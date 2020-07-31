@@ -1,4 +1,4 @@
-import 'package:carbonetx/utilities/firebase/user_data.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
 import 'package:carbonetx/providers/title_data.dart';
@@ -15,7 +15,7 @@ import 'package:carbonetx/utilities/book_button.dart';
 import 'package:random_string/random_string.dart';
 import 'dart:math' show Random;
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:carbonetx/utilities/firebase/user_data.dart';
+import 'package:carbonetx/data/user_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carbonetx/utilities/network_Status.dart';
 
@@ -50,9 +50,9 @@ class _ReferralsState extends State<Referrals>
   }
 
   _getReferralCode() async {
-    referralCode = UserData.referralCode;
+    referralCode = UserData().referralCode;
     String refCode;
-    userEmail = UserData.email;
+    userEmail = UserData().email;
     refCode = referralCode;
     if (refCode == null) {
       displayGenerateButton = true;
@@ -72,7 +72,7 @@ class _ReferralsState extends State<Referrals>
     String refCode;
     print('ref code $code');
     await UserData().currentUser();
-    userEmail = UserData.email;
+    userEmail = UserData().email;
     print('email is $userEmail');
 
     final snapShot =
@@ -81,8 +81,10 @@ class _ReferralsState extends State<Referrals>
     if (snapShot == null || !snapShot.exists) {
       // Document with id == docId doesn't exist.
       print('Does not exist');
-      UserData.addReferralCode(userEmail, referralCode);
-      UserData.addReferralCodeToUser(userEmail, referralCode);
+      Provider.of<UserData>(context, listen: true)
+          .addReferralCode(userEmail, referralCode);
+      Provider.of<UserData>(context, listen: true)
+          .addReferralCodeToUser(userEmail, referralCode);
     } else {
       print('Is duplicate');
       referralCode = codeGen();
@@ -156,9 +158,8 @@ class _ReferralsState extends State<Referrals>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[LogOutButton()],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
             ),
             PageTitle(),
             Card(

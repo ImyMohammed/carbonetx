@@ -27,7 +27,9 @@ class _CustomerMenuBarState extends State<CustomerMenuBar>
   toggleWarning() {
     Provider.of<CustomerDashboardData>(context, listen: true).profileWarning =
         !warningIcon;
-    setState(() {});
+    if (!mounted) {
+      setState(() {});
+    }
   }
 
   @override

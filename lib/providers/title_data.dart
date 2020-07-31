@@ -22,12 +22,10 @@ class TitleData extends ChangeNotifier {
   void changeTitle(String newTitle) {
     pageTitle = newTitle;
     notifyListeners();
-    print(pageTitle);
   }
 
   void changePage(int pageNumber) {
     currentPage = pageNumber;
     notifyListeners();
-    print(currentPage);
   }
 }

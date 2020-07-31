@@ -45,9 +45,8 @@ class _DropByScheduledState extends State<DropByScheduled>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[LogOutButton()],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
             ),
             PageTitle(),
           ],

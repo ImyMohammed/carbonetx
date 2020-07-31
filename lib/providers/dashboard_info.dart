@@ -39,7 +39,6 @@ class CustomerDashboardInfoData extends ChangeNotifier {
   void changeTitle(int index) {
     imageTitle = dashboardTitles[index];
     notifyListeners();
-    print(imageTitle);
   }
 }
 
@@ -77,6 +76,5 @@ class DashboardSubtitleData extends ChangeNotifier {
   void changeInfo(int index) {
     imageInfo = dashboardSubtitles[index];
     notifyListeners();
-    print(imageInfo);
   }
 }

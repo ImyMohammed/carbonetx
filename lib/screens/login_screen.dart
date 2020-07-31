@@ -1,3 +1,4 @@
+import 'package:carbonetx/data/user_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +22,7 @@ import 'package:carbonetx/providers/customer_menu_Navigation.dart';
 import 'package:provider/provider.dart';
 import 'package:carbonetx/providers/title_data.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:carbonetx/services/stripe.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String id = 'login_screen';
@@ -51,13 +53,13 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future _getPassword() async {
+  /* Future _getPassword() async {
     var retrievedEmail = await FlutterKeychain.get(key: "carbonetx_password");
     if (retrievedEmail != null) {
       _controller.text = retrievedEmail;
       email = retrievedEmail;
     }
-  }
+  }*/
 
   Future _getSession() async {
     var sessionID = await FlutterKeychain.get(key: "sessionID");
@@ -233,6 +235,7 @@ class _LoginScreenState extends State<LoginScreen>
               keyboardType: TextInputType.emailAddress,
               onChanged: (value) {
                 email = value;
+                HapticFeedback.lightImpact();
               },
               style: TextStyle(
                 color: Colors.black,
@@ -279,6 +282,7 @@ class _LoginScreenState extends State<LoginScreen>
             obscureText: true,
             onChanged: (value) {
               password = value;
+              HapticFeedback.lightImpact();
             },
             style: TextStyle(
               color: Colors.black,
@@ -307,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen>
         onPressed: () {
           print('Forgot Password Button Pressed');
           createAlertDialog(context);
+          HapticFeedback.mediumImpact();
         },
         padding: EdgeInsets.only(right: 0.0),
         child: Text(
@@ -325,6 +330,7 @@ class _LoginScreenState extends State<LoginScreen>
         elevation: 5.0,
         onPressed: () async {
           print('Login Button Pressed');
+          HapticFeedback.mediumImpact();
           if (mounted)
             setState(() {
               showSpinner = true;
@@ -332,19 +338,21 @@ class _LoginScreenState extends State<LoginScreen>
           try {
             final userLoggedIn = await _auth.signInWithEmailAndPassword(
                 email: email, password: password);
+
             if (userLoggedIn != null) {
               await FlutterKeychain.put(key: "carbonetx_email", value: email);
               await FlutterKeychain.put(
                   key: "carbonetx_password", value: password);
               password = null;
+              await UserData().getData(userLoggedIn.user.uid);
               Navigator.push(context, SlideRoute(widget: DashboardScreen()));
               _passwordController.clear();
               Toast.show(
                 'Login successful!',
                 context,
                 duration: Toast.LENGTH_LONG,
-                gravity: Toast.BOTTOM,
-                textColor: Color(0xFF03BEFF),
+                gravity: Toast.TOP,
+                textColor: Colors.greenAccent,
               );
             }
             if (mounted)
@@ -394,6 +402,7 @@ class _LoginScreenState extends State<LoginScreen>
       onTap: () {
         //Route route = MaterialPageRoute(builder: (context) => SignupScreen());
         Navigator.push(context, SlideRoute(widget: SignupScreen()));
+        HapticFeedback.mediumImpact();
       },
       child: RichText(
         text: TextSpan(
@@ -447,9 +456,9 @@ class _LoginScreenState extends State<LoginScreen>
         Scaffold(
           backgroundColor: Colors.transparent,
           body: ModalProgressHUD(
-            progressIndicator: Loading(
-              indicator: LineScalePulseOutIndicator(),
-              color: kCrimson,
+            progressIndicator: CircularProgressIndicator(
+              backgroundColor: Color(0xFF3A3A39),
+              valueColor: new AlwaysStoppedAnimation<Color>(kCrimson),
             ),
             inAsyncCall: showSpinner,
             color: Colors.black,
