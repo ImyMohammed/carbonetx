@@ -32,7 +32,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     return Material(
-      color: Colors.transparent,
+      color: Colors.black54,
       child: Visibility(
         visible:
             Provider.of<LoadingOnOff>(context, listen: true).showSpinner == true
@@ -44,10 +44,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
             width: width * 0.8,
             decoration: BoxDecoration(
                 shape: BoxShape.rectangle,
-                gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.black87, Colors.black87]),
+                color: Colors.black87,
                 borderRadius: new BorderRadius.all(Radius.circular(5))),
             child: Column(
               children: <Widget>[
@@ -57,7 +54,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                     child: Center(
                       child: CircularProgressIndicator(
                         backgroundColor: Color(0xFF3A3A39),
-                        valueColor: new AlwaysStoppedAnimation<Color>(kCrimson),
+                        valueColor: new AlwaysStoppedAnimation<Color>(kMagenta),
                       ),
                     ),
                   ),

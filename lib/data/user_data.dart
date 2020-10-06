@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_keychain/flutter_keychain.dart';
-import 'package:carbonetx/main.dart';
 
 class UserData {
   static final UserData _userData = UserData._internal();
@@ -15,7 +13,7 @@ class UserData {
   UserData._internal();
 
   final _auth = FirebaseAuth.instance;
-  final _firestore = Firestore.instance;
+  final _firestore = FirebaseFirestore.instance;
 
   String _name;
   String get name => _name;
@@ -35,14 +33,23 @@ class UserData {
   String _accountType;
   String get accountType => _accountType;
 
+  String _status;
+  String get status => _status;
+
   String _userId;
   String get userId => _userId;
 
   String _referralCode;
   String get referralCode => _referralCode;
+  set setReferralCode(String code) {
+    _referralCode = code;
+  }
 
   String _stripeId;
   String get stripeID => _stripeId;
+
+  String _accountId;
+  String get accountId => _accountId;
 
   String sessionID;
   String password;
@@ -50,10 +57,50 @@ class UserData {
   bool _dataLoaded;
   bool get dataLoaded => _dataLoaded;
 
+  bool _cardAdded = false;
+  bool get cardAdded => _cardAdded;
+  set addCard(bool addCard) {
+    _cardAdded = addCard;
+  }
+
   List<Map<dynamic, dynamic>> _carList;
   List<Map<dynamic, dynamic>> get carList => _carList;
 
-  void initState() {}
+  String _cardBrand;
+  String get cardBrand => _cardBrand;
+
+  String _last4;
+  String get last4 => _last4;
+
+  String _expMonth;
+  String get expMonth => _expMonth;
+
+  String _expYear;
+  String get expYear => _expYear;
+
+  String _paymentMethod;
+  String get paymentMethod => _paymentMethod;
+
+  bool _isValidCard = false;
+  bool get isValidCard => _isValidCard;
+  set isCardValid(bool validity) {
+    _isValidCard = validity;
+  }
+
+  bool _isIdVerified = false;
+  bool get isIdVerified => _isIdVerified;
+  set isVerified(bool validity) {
+    _isIdVerified = validity;
+  }
+
+  bool _isEmailVerified = false;
+  bool get isEmailVerified => _isEmailVerified;
+
+  String _cardId;
+  String get cardId => _cardId;
+  set setCardId(String cardId) {
+    _cardId = cardId;
+  }
 
   Future getEmail() async {
     var retrievedEmail = await FlutterKeychain.get(key: "carbonetx_email");
@@ -88,39 +135,26 @@ class UserData {
     return userSessionID;
   }
 
-  Future<String> currentUser() async {
-    await _auth.currentUser().then((value) {
-      print('get current user');
-      String userEmail = value.email;
-      _email = userEmail;
-      print('value of UID is ${value.uid}');
-      getData(value.uid);
-    });
-    return userId;
-  }
-
   Future<bool> getData(String userId) async {
     print('get user data');
     print('got a userId $userId');
+    _firestore.clearPersistence();
     await for (var snapshot in _firestore
         .collection('users')
         .where('userId', isEqualTo: userId)
         .snapshots()) {
-      for (var messages in snapshot.documents) {
-        print(messages.data);
-        _name = messages.data['name'];
-        _mobileNumber = messages.data['mobileNumber'];
-        _accountType = messages.data['accountType'];
-        _userId = messages.data['userId'];
-        _referralCode = messages.data['referralCode'];
-        _stripeId = messages.data['stripeId'];
-        _email = messages.data['email'];
-        print(email);
-        print(_accountType);
-        print('user id is $_userId');
+      for (var messages in snapshot.docs) {
+        _name = messages.data()['name'];
+        _mobileNumber = messages.data()['mobileNumber'];
+        _accountType = messages.data()['accountType'];
+        _userId = messages.data()['userId'];
+        _referralCode = messages.data()['referralCode'];
+        _stripeId = messages.data()['stripeId'];
+        _email = messages.data()['email'];
+        _accountId = messages.data()['accountId'];
+        print(_referralCode);
       }
       print('Finished');
-
       return true;
     }
   }
@@ -132,53 +166,57 @@ class UserData {
         email: email, password: password);
     //_email = userLoggedIn.user.email;
     print('User logged in: ${userLoggedIn.user.uid}');
-    bool loadData = await getData(userLoggedIn.user.uid);
-    print('data loaded? $loadData');
+    await getData(userLoggedIn.user.uid);
+    bool gotCard = await checkIfDocExists(userLoggedIn.user.uid);
+
+    if (gotCard) {
+      print('we got a card');
+      await getCard(userLoggedIn.user.uid);
+    } else {
+      print('we got no card');
+    }
+    //await getCard(userLoggedIn.user.uid);
+    print('data loaded? yes');
 
     return true;
   }
 
   Future addMobileNumber(String mobileNumber, String userId) async {
-    await Firestore.instance
+    await _firestore
         .collection('users')
-        .document(userId)
-        .updateData({'mobileNumber': mobileNumber}).then((value) {});
+        .doc(userId)
+        .update({'mobileNumber': mobileNumber}).then((value) {});
   }
 
-  Future addReferralCode(String email, String code) async {
-    await Firestore.instance
-        .collection('referrals')
-        .document(code)
-        .setData({'email': '$email', 'uses': 1, 'referralCode': code});
+  Future addReferralCode(String code) async {
+    await _firestore.collection('referralCodes').doc(code).set({
+      'email': email,
+      'uses': 3,
+      'referralCode': code,
+      'userId': userId,
+      'stripeId': stripeID,
+      'accountId': accountId,
+    });
   }
 
-  Future addReferralCodeToUser(String email, String code) async {
-    await Firestore.instance
+  Future addReferralCodeToUser(String refCode) async {
+    await _firestore
         .collection('users')
-        .document(userId)
-        .updateData({'referralCode': code});
-  }
-
-  Future addReferral(String email, String code) async {
-    await Firestore.instance
-        .collection('users')
-        .document(userId)
-        .collection('referrals')
-        .document('userReferrals')
-        .setData({'email': '$email', 'uses': 1, 'referralCode': code});
+        .doc(userId)
+        .update({'referralCode': refCode, 'accountBalance': 0});
   }
 
   Future addStripeID(String stripeId) async {
-    await Firestore.instance
+    await _firestore
         .collection('users')
-        .document(userId)
-        .updateData({'stripeID': stripeId});
+        .doc(userId)
+        .update({'stripeID': stripeId});
   }
 
   Future addCar(String carMake, String carModel, String regNo) async {
-    await Firestore.instance
+    await _firestore
         .collection('users')
-        .document(UserData().userId)
+        .doc(UserData().userId)
         .collection('cars')
         .add({
       'carMake': carMake,
@@ -189,29 +227,51 @@ class UserData {
   }
 
   Future saveUserDetails(String userId, String newUserEmail,
-      String newUsersName, String stripeId) async {
+      String newUsersName, String stripeId, String accountId) async {
     print('save attempt');
-    await Firestore.instance.collection('users').document(userId).setData({
+    await _firestore.collection('users').doc(userId).set({
       'accountType': 'customer',
       'email': newUserEmail,
       'mobileNumber': 'Enter your Mob No.',
       'name': newUsersName,
       'userId': userId,
-      'stripeId': stripeId
+      'stripeId': stripeId,
+      'accountId': accountId
     });
   }
 
   Future deleteCar(String regNo) async {
-    await for (var snapshot in Firestore.instance
+    await for (var snapshot in FirebaseFirestore.instance
         .collection('users')
-        .document(UserData()._userId)
+        .doc(UserData()._userId)
         .collection('cars')
         .where('regNo', isEqualTo: regNo)
         .snapshots()) {
-      for (var cars in snapshot.documents) {
+      for (var cars in snapshot.docs) {
         print(cars.data);
         cars.reference.delete();
       }
+    }
+  }
+
+  Future<bool> deleteCard() async {
+    await for (var snapshot in _firestore
+        .collection('users')
+        .doc(UserData().userId)
+        .collection('card')
+        .where('userId', isEqualTo: UserData().userId)
+        .snapshots()) {
+      for (DocumentSnapshot data in snapshot.docs) {
+        data.reference.delete();
+        print('deleted');
+        _cardAdded = false;
+        _cardId = null;
+        _expMonth = null;
+        _expYear = null;
+        _cardBrand = null;
+        _last4 = null;
+      }
+      return true;
     }
   }
 
@@ -229,14 +289,90 @@ class UserData {
   }*/
 
   Future getCars(String userId) async {
-    await for (var snapshot in Firestore.instance
+    await for (var snapshot in FirebaseFirestore.instance
         .collection('users')
-        .document(userId)
+        .doc(userId)
         .collection('cars')
         .snapshots()) {
-      for (var cars in snapshot.documents) {
-        carList.add(cars.data);
+      for (var cars in snapshot.docs) {
+        carList.add(cars.data());
       }
+    }
+  }
+
+  Future<bool> checkIfDocExists(String userId) async {
+    bool gotCard;
+    try {
+      final snapShot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('card')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (snapShot.docs.length < 1) {
+        // Document with id == docId doesn't exist.
+        print('Nope sorry');
+        gotCard = false;
+      } else {
+        print('Yes it exists');
+        gotCard = true;
+        _cardAdded = true;
+      }
+    } catch (e) {
+      print('Sorry unable to find card $e');
+    }
+
+    return gotCard;
+  }
+
+  Future getCard(String userId) async {
+    print('getting card data');
+    await for (var snapshot in _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('card')
+        .where('userId', isEqualTo: userId)
+        .snapshots()) {
+      for (var cardDetails in snapshot.docs) {
+        _cardBrand = cardDetails.data()['brand'];
+        _last4 = cardDetails.data()['last4'];
+        _expMonth = cardDetails.data()['expMonth'].toString();
+        _expYear = cardDetails.data()['expYear'].toString();
+        _paymentMethod = cardDetails.data()['paymentMethod'];
+        _cardId = cardDetails.data()['cardId'];
+        _cardAdded = true;
+        print(cardDetails.data());
+      }
+      return _cardAdded;
+    }
+  }
+
+  String getCardBrand(String issuer) {
+    switch (issuer) {
+      case "Visa":
+        {
+          return "images/visa.png";
+        }
+        break;
+
+      case "MasterCard":
+        {
+          return "images/mastercard.png";
+        }
+        break;
+
+      case "American Express":
+        {
+          return "images/amex.png";
+        }
+        break;
+
+      default:
+        {
+          return "images/generic.png";
+        }
+        break;
     }
   }
 }

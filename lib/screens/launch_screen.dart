@@ -41,23 +41,7 @@ class _LaunchScreenState extends State<LaunchScreen>
     super.initState();
     showSpinner = true;
 
-    _checkConnectivity();
     _login();
-  }
-
-  _checkConnectivity() async {
-    connectivityResult = await (Connectivity().checkConnectivity());
-
-    if (connectivityResult == ConnectivityResult.mobile) {
-      print('Connected data');
-      isConnected = true;
-    } else if (connectivityResult == ConnectivityResult.wifi) {
-      print('Connected wifi');
-      isConnected = true;
-    } else {
-      print('Not connected');
-      isConnected = false;
-    }
   }
 
   Future _login() async {
@@ -69,6 +53,7 @@ class _LaunchScreenState extends State<LaunchScreen>
 
         if (userLoggedIn != null) {
           print('Got to dashboard');
+          await Future.delayed(const Duration(milliseconds: 1000), () {});
           Navigator.push(context, SlideRoute(widget: DashboardScreen()));
           Toast.show(
             'Welcome Back!',
@@ -79,18 +64,9 @@ class _LaunchScreenState extends State<LaunchScreen>
           );
           HapticFeedback.mediumImpact();
         }
-        if (mounted)
-          setState(() {
-            showSpinner = false;
-          });
       } catch (error) {
         var errorMessage = error.toString();
         print(errorMessage);
-
-        /*  if (mounted)
-          setState(() {
-            showSpinner = false;
-          });*/
 
         var message = firebaseAuthHandler(errorMessage);
         Toast.show(
@@ -100,15 +76,15 @@ class _LaunchScreenState extends State<LaunchScreen>
           gravity: Toast.BOTTOM,
           textColor: Color(0xFFFF0362),
         );
-        _goToLogin();
+        await _goToLogin();
       }
     } else {
-      _goToLogin();
+      await _goToLogin();
     }
   }
 
   Future _goToLogin() async {
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    await Future.delayed(const Duration(milliseconds: 4000), () {
       setState(() {
         showSpinner = false;
         Navigator.push(
@@ -122,12 +98,11 @@ class _LaunchScreenState extends State<LaunchScreen>
   Widget _appLogo() {
     return Container(
       margin: EdgeInsets.fromLTRB(0, 10, 0, 5),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(140, 100, 140, 20),
+      child: Center(
         child: Image.asset(
-          'images/carbonEtxLogo.png',
-          width: 100,
-          alignment: Alignment.bottomCenter,
+          'images/sheenobiLogo.png',
+          width: 300,
+          alignment: Alignment.center,
         ),
       ),
     );
@@ -136,21 +111,22 @@ class _LaunchScreenState extends State<LaunchScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Colors.black,
         body: ModalProgressHUD(
-      progressIndicator: CircularProgressIndicator(
-        backgroundColor: Color(0xFF3A3A39),
-        valueColor: new AlwaysStoppedAnimation<Color>(kCrimson),
-      ),
-      inAsyncCall: showSpinner,
-      color: Colors.black,
-      dismissible: false,
-      opacity: 0.7,
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: kAppBackground,
-        child: _appLogo(),
-      ),
-    ));
+          progressIndicator: CircularProgressIndicator(
+            backgroundColor: Color(0xFF3A3A39),
+            valueColor: new AlwaysStoppedAnimation<Color>(Color(0xfff817ea)),
+          ),
+          inAsyncCall: showSpinner,
+          color: Colors.black,
+          dismissible: false,
+          opacity: 0,
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            child: _appLogo(),
+            decoration: kAppBackground,
+          ),
+        ));
   }
 }

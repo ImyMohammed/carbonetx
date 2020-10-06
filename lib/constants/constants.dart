@@ -12,23 +12,33 @@ import 'package:provider/provider.dart';
 import 'package:carbonetx/providers/customer_menu_Navigation.dart';
 import 'package:carbonetx/providers/dashboard_info.dart';
 
-final kDarkContrast = Colors.white;
-const kDarkColour = Colors.black54;
-final kLightContrast = Color(0xFFE8E9EA);
+const kLightTheme = Colors.black;
+final kDarkMode = Color(0xFFE8E9EA);
 
 const kYellow = Color(0xffFFC100);
-const kCrimson = Color(0xFFFF0362);
+const kMagenta = Color(0xFFf817ea);
 
 final kHintTextStyle = TextStyle(
-  color: Colors.black54,
+  color: Colors.grey,
   fontFamily: 'OpenSans',
 );
 
 final kLabelStyle = TextStyle(
-  color: kDarkContrast,
-  fontWeight: FontWeight.bold,
-  fontFamily: 'OpenSans',
-);
+    foreground: Paint()..shader = lightThemeGradient,
+    fontWeight: FontWeight.bold,
+    fontFamily: 'OpenSans',
+    shadows: <Shadow>[
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 1.0,
+        color: Colors.black,
+      ),
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 1.0,
+        color: Colors.black,
+      ),
+    ]);
 
 final kEmailLabelStyle = TextStyle(
   color: Colors.black45,
@@ -36,8 +46,10 @@ final kEmailLabelStyle = TextStyle(
   fontFamily: 'OpenSans',
 );
 
+final kCardStyle = TextStyle(color: Colors.black, fontFamily: 'Credit Card');
+
 final kPageTitle = TextStyle(
-  color: Colors.white,
+  color: Colors.black,
   fontWeight: FontWeight.bold,
   fontFamily: 'OpenSans',
   fontSize: 25,
@@ -55,50 +67,55 @@ final kPageTitle = TextStyle(
   ],
 );
 
-final kDashTitle = TextStyle(
-  color: Colors.white,
-  fontWeight: FontWeight.bold,
-  fontFamily: 'OpenSans',
-  fontSize: 25,
-  shadows: <Shadow>[
-    Shadow(
-      offset: Offset(0, 0),
-      blurRadius: 10.0,
-      color: Colors.black,
-    ),
-    Shadow(
-      offset: Offset(0, 0),
-      blurRadius: 10.0,
-      color: Colors.black,
-    ),
-  ],
-);
+kDashTitle(double fontSize) {
+  return TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontFamily: 'OpenSans',
+    fontSize: fontSize,
+    shadows: <Shadow>[
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 5.0,
+        color: Colors.black,
+      ),
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 5.0,
+        color: Colors.black,
+      ),
+    ],
+  );
+}
 
-final kDashSubtitle = TextStyle(
-  color: Colors.white,
-  fontWeight: FontWeight.bold,
-  fontFamily: 'OpenSans',
-  fontSize: 12,
-  shadows: <Shadow>[
-    Shadow(
-      offset: Offset(0, 0),
-      blurRadius: 10.0,
-      color: Colors.black,
-    ),
-    Shadow(
-      offset: Offset(0, 0),
-      blurRadius: 10.0,
-      color: Colors.black,
-    ),
-  ],
-);
+kDashSubtitle(double fontSize) {
+  return TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontFamily: 'OpenSans',
+    fontSize: fontSize,
+    shadows: <Shadow>[
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 5.0,
+        color: Colors.black,
+      ),
+      Shadow(
+        offset: Offset(0, 0),
+        blurRadius: 5.0,
+        color: Colors.black,
+      ),
+    ],
+  );
+}
 
 final kBoxDecorationStyle = BoxDecoration(
-  color: kDarkContrast,
+  color: Colors.black87,
+  backgroundBlendMode: BlendMode.hardLight,
   borderRadius: BorderRadius.circular(10.0),
   boxShadow: [
     BoxShadow(
-      color: Colors.black12,
+      color: Colors.black54,
       blurRadius: 6.0,
       offset: Offset(0, 2),
     ),
@@ -110,11 +127,10 @@ final kAppBackground = BoxDecoration(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFF41357),
-      Color(0xFF4D4A4A),
-      Color(0xFF212020),
+      Color(0xFFf0f0f0),
+      Color(0xFFffffff),
     ],
-    stops: [0.15, 0.15, 1],
+    stops: [0.4, 1],
   ),
 );
 
@@ -146,7 +162,7 @@ class LogOutButton extends StatelessWidget {
           textColor: Color(0xFF03BEFF),
         );
       },
-      color: Colors.white,
+      color: Colors.black87,
     );
   }
 }
@@ -159,15 +175,15 @@ List<String> images = [
 ];
 
 List<String> dashboardTitles = [
-  "At home? Work?",
+  "Stealth Wax & Wash",
   "Protection Layer",
   "Showroom Shine",
   "Pay with the App"
 ];
 
 List<String> dashboardSubtitles = [
-  "We'll come to your car, whether its parked at home or at work.",
-  "Our Carnauba Wax ensures the paintwork is protected too.",
+  "We'll come to you, whether your car's parked at home or at work.",
+  "The Carbanau Wax formula ensures the paintwork is protected.",
   "Brilliant shine and gloss effect on metal, glass, firbreglass etc, surfaces.",
   "No need to pay in person, we'll be there an gone before you know it."
 ];
@@ -202,3 +218,43 @@ final kAddCarFields = BoxDecoration(
     ),
   ],
 );
+
+final Shader linearGradient = LinearGradient(
+  colors: <Color>[Color(0xffffc64c), Color(0xfff817ea)],
+).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0));
+
+final Shader lightThemeGradient = LinearGradient(
+  colors: <Color>[Color(0xff454545), Color(0xff2e2e2e)],
+).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0));
+
+final gradientTheme = LinearGradient(
+  colors: <Color>[
+    Color(0xffffc64c),
+    Color(0xfff817ea),
+  ],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+
+final gradientCardTheme = LinearGradient(
+  colors: <Color>[
+    Colors.blue,
+    Colors.purpleAccent,
+  ],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+final inactiveIconTheme = LinearGradient(
+  colors: <Color>[
+    Colors.grey,
+    Colors.grey,
+  ],
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+);
+
+final kGradientText = TextStyle(
+    foreground: Paint()..shader = linearGradient,
+    fontFamily: 'OpenSans',
+    fontSize: 18,
+    fontWeight: FontWeight.bold);

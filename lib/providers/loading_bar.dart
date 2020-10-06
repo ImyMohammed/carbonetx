@@ -10,11 +10,18 @@ import 'package:loading/indicator/line_scale_pulse_out_indicator.dart';
 
 class LoadingOnOff extends ChangeNotifier {
   bool showSpinner = false;
+  String loadingMessage;
 
   void loadingOn() {
     print('toggled');
     showSpinner = true;
     notifyListeners();
+  }
+
+  String loadingItem(String loadingMsg) {
+    loadingMessage = loadingMsg;
+    notifyListeners();
+    return loadingMessage;
   }
 
   void loadingOff() {

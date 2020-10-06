@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:carbonetx/utilities/customer_menu_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carbonetx/constants/constants.dart';
@@ -25,6 +24,10 @@ import 'package:carbonetx/providers/loading_bar.dart';
 import 'package:carbonetx/providers/customer_menu_Navigation.dart';
 import 'package:carbonetx/utilities/network_Status.dart';
 import 'package:carbonetx/services/stripe.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:carbonetx/utilities/Gradient_Icon.dart';
+import 'package:carbonetx/components/raised_gradient_button.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class CustomerProfile extends StatefulWidget {
   static final CustomerProfile _customerProfile = CustomerProfile._internal();
@@ -44,15 +47,23 @@ class _CustomerProfileState extends State<CustomerProfile>
   Color verifiedColour;
   IconData verifyIcon;
 
+  IconData idVerification;
+  Color iDColour;
+
   String verificationButton = 'SEND';
   String verifyInfo = 'Click SEND to receive SMS code.';
 
-  var _numberController = TextEditingController();
+  var _numberController = TextEditingController(text: '+44');
   var _smsController = TextEditingController();
 
   double width;
+  double height;
 
   int instance = 0;
+
+  String emailButtonText = 'Send';
+  bool emailVerified = false;
+  bool emailSent = false;
 
   void initState() {
     super.initState();
@@ -62,18 +73,26 @@ class _CustomerProfileState extends State<CustomerProfile>
       Provider.of<LoadingOnOff>(context, listen: false).loadingOff();
       // Add Your Code here.
       checkMobNumber();
+      checkIdVerification();
       print('Uid is ${UserData().userId}');
     });
     instance++;
     print('Instance $instance');
     print(UserData().userId);
-
     _refresh();
+  }
+
+  Future<bool> _checkEmail() async {
+    emailVerified = FirebaseAuth.instance.currentUser.emailVerified;
+    setState(() {});
+    return emailVerified;
   }
 
   _refresh() {
     Timer(Duration(seconds: 1), () {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -98,14 +117,113 @@ class _CustomerProfileState extends State<CustomerProfile>
     }
   }
 
+  void checkIdVerification() async {
+    if (UserData().isIdVerified) {
+      iDColour = Colors.greenAccent;
+      idVerification = FontAwesomeIcons.check;
+    } else {
+      iDColour = kYellow;
+      idVerification = FontAwesomeIcons.exclamationTriangle;
+    }
+  }
+
   Future updateMobileNumber(String mobileNumber, String userId) async {
-    await Firestore.instance
+    await FirebaseFirestore.instance
         .collection('users')
-        .document(userId)
-        .updateData({'mobileNumber': mobileNumber}).then((value) {});
+        .doc(userId)
+        .update({'mobileNumber': mobileNumber}).then((value) {});
+  }
+
+  _sendVerificationEmail() {
+    BuildContext dialogContext;
+    return showDialog(
+      context: context,
+      builder: (context) {
+        String contentText = 'Send verification email to ${UserData().email}?';
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Color(0xffe6e6e6),
+            title: Text(
+              'Verify Email',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: width * 0.05,
+                color: Colors.black87,
+                fontFamily: 'OpenSans',
+              ),
+            ),
+            content: Container(
+              height: height * 0.2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(contentText,
+                      maxLines: 5,
+                      textDirection: TextDirection.ltr,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                          fontFamily: 'OpenSans',
+                          fontSize: width * 0.045)),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              RaisedGradientButton(
+                  width: width * 0.35,
+                  height: height * 0.1,
+                  gradient: gradientTheme,
+                  child: MaterialButton(
+                    color: Colors.transparent,
+                    splashColor: Colors.green,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        emailButtonText,
+                        style: TextStyle(
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.bold,
+                          fontSize: width * 0.04,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  onPressed: () async {
+                    print(FirebaseAuth.instance.currentUser.emailVerified);
+                    if (!emailSent) {
+                      ActionCodeSettings actionHandler = ActionCodeSettings(
+                          handleCodeInApp: true,
+                          url: 'https://carbonetx.page.link');
+                      FirebaseAuth.instance.currentUser
+                          .sendEmailVerification(actionHandler)
+                          .then((value) => print('sent'));
+                      setState(() {
+                        contentText =
+                            "Email sent! Click the link in the email to verify then press confirm.";
+                        print(contentText);
+                        emailButtonText = 'Confirm';
+                        emailSent = true;
+                      });
+                    } else {
+                      await _checkEmail();
+                      Navigator.pop(context);
+                    }
+                  }),
+            ],
+          );
+        });
+      },
+    );
   }
 
   createAddNumberAlert() {
+    var maskFormatter = new MaskTextInputFormatter(
+        mask: '+44z#########',
+        filter: {"#": RegExp(r'[0-9]'), "z": RegExp(r'[1-9]')});
     String newNumber = "";
     _numberController.clear();
     print(newNumber);
@@ -113,67 +231,78 @@ class _CustomerProfileState extends State<CustomerProfile>
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: Color(0xFF3A3A39),
+            backgroundColor: Color(0xffe6e6e6),
             title: Text(
               'Add your Mobile No.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Colors.white,
+                fontSize: width * 0.05,
+                color: Colors.black87,
                 fontFamily: 'OpenSans',
               ),
             ),
-            content: TextField(
-              inputFormatters: [
-                //WhitelistingTextInputFormatter.digitsOnly,
-                BlacklistingTextInputFormatter(RegExp('^(?:[+0]9)?[0-9]{12}'))
-              ],
-              controller: _numberController,
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                newNumber = value;
-              },
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'OpenSans',
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 14.0),
-                prefixIcon: Icon(
-                  Icons.phone,
-                  color: Colors.white,
-                ),
-                hintText: "Enter your Mob No.",
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                  fontFamily: 'OpenSans',
-                  fontWeight: FontWeight.bold,
-                  fontSize: width != null ? width * 0.040 : 12,
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black45),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFFF0362)),
-                ),
+            content: Container(
+              height: height * 0.2,
+              child: Column(
+                children: [
+                  Spacer(),
+                  Card(
+                    color: Colors.black87,
+                    margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                    elevation: 8,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          0, height * 0.005, 0, height * 0.005),
+                      child: TextField(
+                        inputFormatters: [
+                          //WhitelistingTextInputFormatter.digitsOnly,
+                          maskFormatter,
+                          FilteringTextInputFormatter.deny(
+                              RegExp('^(?:[+0]9)?[0-9]{12}'))
+                        ],
+                        controller: _numberController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          newNumber = value;
+                        },
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'OpenSans',
+                          fontWeight: FontWeight.bold,
+                          fontSize: width * 0.045,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          prefixIcon: GradientIcon(FontAwesomeIcons.phone,
+                              width * 0.055, gradientTheme),
+                          hintText: "+44",
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'OpenSans',
+                            fontWeight: FontWeight.bold,
+                            fontSize: width * 0.04,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Spacer(),
+                ],
               ),
             ),
             actions: <Widget>[
-              MaterialButton(
-                minWidth: 100,
-                color: Color(0xFFFF0362),
-                elevation: 5.0,
+              RaisedGradientButton(
+                width: width * 0.35,
+                height: height * 0.1,
+                gradient: gradientTheme,
                 child: UserData().mobNumber == 'Enter your Mob No.'
                     ? Text(
                         'SAVE',
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: width * 0.04,
                           color: Colors.black,
                         ),
                       )
@@ -182,11 +311,10 @@ class _CustomerProfileState extends State<CustomerProfile>
                         style: TextStyle(
                           fontFamily: 'OpenSans',
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: width * 0.04,
                           color: Colors.black,
                         ),
                       ),
-                textColor: Colors.black,
                 onPressed: () {
                   print('reset');
                   Navigator.pop(context);
@@ -232,11 +360,13 @@ class _CustomerProfileState extends State<CustomerProfile>
 
   mobileVerification([String verificationCode, int forceResendingToken]) {
     String smsCode;
+    BuildContext dialogContext;
     return showDialog(
-        context: context,
-        builder: (context) {
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: Color(0xFF3A3A39),
+            backgroundColor: Color(0xffe6e6e6),
             title: Text(
               'Verify your Mobile No.',
               textAlign: TextAlign.center,
@@ -250,7 +380,7 @@ class _CustomerProfileState extends State<CustomerProfile>
             content: TextField(
               inputFormatters: [
                 WhitelistingTextInputFormatter.digitsOnly,
-                BlacklistingTextInputFormatter(RegExp("^(?:[+0]9)?[0-9]{10}"))
+                FilteringTextInputFormatter.deny(RegExp("^(?:[+0]9)?[0-9]{10}"))
               ],
               controller: _smsController,
               keyboardType: TextInputType.number,
@@ -323,40 +453,61 @@ class _CustomerProfileState extends State<CustomerProfile>
             ],
           );
         });
+      },
+    );
   }
 
   _buildApplyButton() {
-    return RaisedButton(
-      color: Colors.black45,
-      elevation: 5,
-      textColor: Colors.white,
-      highlightColor: Colors.blue,
-      hoverColor: Colors.blue,
-      disabledColor: Colors.black45,
-      disabledTextColor: Colors.black45,
-      padding: EdgeInsets.fromLTRB(50, 0, 50, 0),
-      splashColor: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      shape: new RoundedRectangleBorder(
-        borderRadius: new BorderRadius.circular(30.0),
-      ),
-      onPressed: () {
-        print('Apply pressed');
-        Toast.show("Pressed", context);
+    return Container(
+      margin: EdgeInsets.fromLTRB(0, 10, 0, 0),
+      alignment: Alignment.bottomCenter,
+      child: RaisedButton(
+        color: Colors.black87,
+        elevation: 5,
+        textColor: Colors.white,
+        highlightColor: Colors.blue,
+        hoverColor: Colors.blue,
+        disabledColor: Colors.black45,
+        disabledTextColor: Colors.black45,
+        padding: EdgeInsets.fromLTRB(50, 0, 50, 0),
+        splashColor: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        shape: new RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(30.0),
+        ),
+        onPressed: () {
+          print('Apply pressed');
+          Toast.show("Pressed", context);
+          HapticFeedback.selectionClick();
 /*        StripeServices().createStripeCustomer(
-            email: UserData.email,
-            name: UserData.name,
-            description: 'customer');*/
-      },
-      child: Text(
-        'Apply',
-        style: kBookButton,
+              email: UserData.email,
+              name: UserData.name,
+              description: 'customer');*/
+        },
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Apply',
+                style: kBookButton,
+              ),
+            ),
+            Padding(padding: const EdgeInsets.fromLTRB(10, 0, 0, 0)),
+            Icon(
+              FontAwesomeIcons.lock,
+              size: 18,
+              color: kMagenta,
+            )
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    height = MediaQuery.of(context).size.height;
     getWidth();
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -373,78 +524,108 @@ class _CustomerProfileState extends State<CustomerProfile>
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[LogOutButton()],
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                      },
+                      child: Icon(
+                        FontAwesomeIcons.cog,
+                        size: width * 0.08,
+                      ),
+                    )
+                  ],
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
               ),
-              Stack(children: <Widget>[PageTitle()]),
+              Center(child: Text('My Profile', style: kPageTitle)),
               Card(
-                color: Colors.black54,
-                margin: EdgeInsets.fromLTRB(16, 30, 16, 16),
+                color: Colors.black87,
+                margin: EdgeInsets.fromLTRB(5, 30, 5, 16),
                 elevation: 8,
                 child: Row(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      child: Icon(
-                        FontAwesomeIcons.user,
-                        size: 20,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    Text(
-                      UserData().name,
-                      style: TextStyle(
-                          color: Colors.grey,
-                          fontFamily: 'OpenSans',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-              Card(
-                color: Colors.black54,
-                margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                elevation: 8,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                      child: Icon(
-                        Icons.email,
-                        size: 20,
-                        color: Colors.grey,
+                      child: GradientIcon(
+                        FontAwesomeIcons.user,
+                        18,
+                        gradientTheme,
                       ),
                     ),
                     Expanded(
                       child: AutoSizeText(
-                        '${UserData().email}',
+                        UserData().name,
                         maxLines: 1,
-                        minFontSize: 5,
+                        minFontSize: 3,
                         maxFontSize: 18,
                         style: TextStyle(
-                            color: Colors.grey,
+                            foreground: Paint()..shader = linearGradient,
                             fontFamily: 'OpenSans',
                             fontWeight: FontWeight.bold),
                       ),
                     ),
-                    Visibility(
-                      visible: true,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 0, 15, 0),
-                        child: Icon(
-                          FontAwesomeIcons.check,
-                          size: 20,
-                          color: Colors.greenAccent,
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (!FirebaseAuth.instance.currentUser.emailVerified) {
+                    _sendVerificationEmail();
+                    HapticFeedback.selectionClick();
+                  }
+                },
+                child: Card(
+                  color: Colors.black87,
+                  margin: EdgeInsets.fromLTRB(5, 0, 5, 16),
+                  elevation: 8,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                        child: GradientIcon(
+                            FontAwesomeIcons.envelope, 18, gradientTheme),
+                      ),
+                      Expanded(
+                        child: AutoSizeText(
+                          '${UserData().email}',
+                          maxLines: 1,
+                          minFontSize: 5,
+                          maxFontSize: 18,
+                          style: TextStyle(
+                              foreground: Paint()..shader = linearGradient,
+                              fontFamily: 'OpenSans',
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
-                    )
-                  ],
+                      Visibility(
+                        visible: true,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 0, 15, 0),
+                          child:
+                              FirebaseAuth.instance.currentUser.emailVerified ==
+                                      true
+                                  ? Icon(
+                                      FontAwesomeIcons.check,
+                                      size: 20,
+                                      color: Colors.greenAccent,
+                                    )
+                                  : Icon(
+                                      FontAwesomeIcons.exclamationTriangle,
+                                      size: 20,
+                                      color: Colors.amberAccent,
+                                    ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
               GestureDetector(
@@ -453,23 +634,28 @@ class _CustomerProfileState extends State<CustomerProfile>
                   createAddNumberAlert();
                 },
                 child: Card(
-                  color: Colors.black54,
-                  margin: EdgeInsets.fromLTRB(16, 1, 16, 16),
+                  color: Colors.black87,
+                  margin: EdgeInsets.fromLTRB(5, 1, 5, 16),
                   elevation: 8,
                   child: Row(
                     children: <Widget>[
                       Padding(
                         padding: const EdgeInsets.all(18.0),
-                        child: Icon(
+                        child: GradientIcon(
                           FontAwesomeIcons.phone,
-                          size: 20,
-                          color: Colors.grey,
+                          18,
+                          gradientTheme,
                         ),
                       ),
-                      Text(
-                        UserData().mobNumber,
+                      AutoSizeText(
+                        (UserData().mobNumber) != null
+                            ? (UserData().mobNumber)
+                            : 'Enter your Mob No.',
+                        maxLines: 1,
+                        minFontSize: 5,
+                        maxFontSize: 18,
                         style: TextStyle(
-                            color: Colors.grey,
+                            foreground: Paint()..shader = linearGradient,
                             fontFamily: 'OpenSans',
                             fontSize: 14,
                             fontWeight: FontWeight.bold),
@@ -478,14 +664,20 @@ class _CustomerProfileState extends State<CustomerProfile>
                       GestureDetector(
                         onTap: () {
                           print('Verify');
-                          ;
+                          mobileVerification();
                         },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
-                          child: Icon(
-                            verifyIcon,
-                            size: 20,
-                            color: verifiedColour,
+                          child: GestureDetector(
+                            onTap: () {
+                              print('verify');
+                              HapticFeedback.selectionClick();
+                            },
+                            child: Icon(
+                              verifyIcon,
+                              size: 20,
+                              color: verifiedColour,
+                            ),
                           ),
                         ),
                       )
@@ -493,20 +685,79 @@ class _CustomerProfileState extends State<CustomerProfile>
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(15, 130, 15, 10),
-                child: Text(
-                  'Apply to become a crew member and wash cars in your area.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: width * 0.035,
-                    fontFamily: 'OpenSans',
-                    fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () {
+                  print('tapped');
+                },
+                child: Card(
+                  color: Colors.black87,
+                  margin: EdgeInsets.fromLTRB(5, 1, 5, 16),
+                  elevation: 8,
+                  child: Row(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(18.0),
+                        child: GradientIcon(
+                          FontAwesomeIcons.addressCard,
+                          18,
+                          gradientTheme,
+                        ),
+                      ),
+                      Text(
+                        'ID Verification',
+                        style: TextStyle(
+                            foreground: Paint()..shader = linearGradient,
+                            fontFamily: 'OpenSans',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          print('Verify');
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
+                          child: Icon(
+                            idVerification,
+                            size: 20,
+                            color: iDColour,
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                 ),
               ),
-              _buildApplyButton(),
+              Card(
+                color: Colors.black87,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                margin: EdgeInsets.fromLTRB(5, 1, 5, 16),
+                elevation: 8,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
+                  child: AutoSizeText(
+                    'Apply to become a crew member and wash cars in your area.',
+                    maxFontSize: 20,
+                    minFontSize: 10,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: width * 0.035,
+                      fontFamily: 'OpenSans',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Row(
+                  children: [Spacer(), _buildApplyButton(), Spacer()],
+                ),
+              )
             ],
           ),
         ),

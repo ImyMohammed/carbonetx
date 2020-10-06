@@ -11,7 +11,7 @@ class BookButton extends StatefulWidget {
 
 class _BookButtonState extends State<BookButton>
     with SingleTickerProviderStateMixin {
-  Color buttonColor = Colors.black54;
+  Color buttonColor = Colors.black87;
 
   AnimationController _animationController;
   Animation _colorTween;
@@ -45,9 +45,9 @@ class _BookButtonState extends State<BookButton>
     return Center(
       child: RaisedButton(
         elevation: 5,
-        color: _colorTween.value,
+        color: buttonColor,
         textColor: Colors.white,
-        splashColor: kCrimson,
+        splashColor: kMagenta,
         disabledColor: Colors.white,
         disabledTextColor: Colors.white,
         padding: EdgeInsets.fromLTRB(50, 0, 50, 0),
@@ -59,7 +59,7 @@ class _BookButtonState extends State<BookButton>
           HapticFeedback.lightImpact();
           if (CustomerDashboard.regSelected == null) {
             Toast.show("Select a car", context,
-                textColor: kCrimson, gravity: Toast.TOP);
+                textColor: kMagenta, gravity: Toast.TOP);
           } else {
             Toast.show("Pressed", context);
           }

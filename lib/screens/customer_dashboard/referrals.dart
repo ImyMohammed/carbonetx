@@ -5,19 +5,11 @@ import 'package:carbonetx/providers/title_data.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:toast/toast.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_swiper/flutter_swiper.dart';
-import 'package:carbonetx/screens/customer_dashboard/customer_dashboard_screen.dart';
-import 'package:flutter_page_indicator/flutter_page_indicator.dart';
-import 'package:carbonetx/providers/dashboard_info.dart';
 import 'package:provider/provider.dart';
-import 'package:carbonetx/utilities/book_button.dart';
 import 'package:random_string/random_string.dart';
 import 'dart:math' show Random;
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:carbonetx/data/user_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:carbonetx/utilities/network_Status.dart';
 
 class Referrals extends StatefulWidget {
   static final Referrals _referrals = Referrals._internal();
@@ -38,9 +30,6 @@ class _ReferralsState extends State<Referrals>
 
   var copyButtonEnabled = false;
   var displayGenerateButton = false;
-  var userEmail;
-
-  final _firestore = Firestore.instance;
 
   void initState() {
     super.initState();
@@ -52,7 +41,6 @@ class _ReferralsState extends State<Referrals>
   _getReferralCode() async {
     referralCode = UserData().referralCode;
     String refCode;
-    userEmail = UserData().email;
     refCode = referralCode;
     if (refCode == null) {
       displayGenerateButton = true;
@@ -71,35 +59,27 @@ class _ReferralsState extends State<Referrals>
     print('called');
     String refCode;
     print('ref code $code');
-    await UserData().currentUser();
-    userEmail = UserData().email;
-    print('email is $userEmail');
+    print('email is ${UserData().email}');
 
-    final snapShot =
-        await Firestore.instance.collection('referrals').document(code).get();
+    final snapShot = await FirebaseFirestore.instance
+        .collection('referralCodes')
+        .doc(code)
+        .get();
 
     if (snapShot == null || !snapShot.exists) {
       // Document with id == docId doesn't exist.
       print('Does not exist');
-      Provider.of<UserData>(context, listen: true)
-          .addReferralCode(userEmail, referralCode);
-      Provider.of<UserData>(context, listen: true)
-          .addReferralCodeToUser(userEmail, referralCode);
+      UserData().setReferralCode = code;
+      referralCode = code;
+      await UserData().addReferralCodeToUser(code);
+      await UserData().addReferralCode(code);
+      displayGenerateButton = false;
+      copyButtonEnabled = true;
+      setState(() {});
     } else {
       print('Is duplicate');
       referralCode = codeGen();
       _checkCode(referralCode);
-    }
-  }
-
-  void stream(String code) async {
-    await for (var snapshot in _firestore
-        .collection('referralCodes')
-        .where('code', isEqualTo: code)
-        .snapshots()) {
-      for (var messages in snapshot.documents) {
-        print(messages.data);
-      }
     }
   }
 
@@ -122,19 +102,26 @@ class _ReferralsState extends State<Referrals>
         hoverColor: Colors.blue,
         disabledColor: Colors.black45,
         disabledTextColor: Colors.black45,
-        padding: EdgeInsets.fromLTRB(50, 0, 50, 0),
+        padding: EdgeInsets.fromLTRB(25, 0, 25, 0),
         splashColor: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: new BorderRadius.circular(30.0),
         ),
-        onPressed: () {
+        onPressed: () async {
           print('Apply pressed');
-
-          Toast.show("Pressed", context);
+          Toast.show(
+            'Generating code!',
+            context,
+            duration: Toast.LENGTH_LONG,
+            gravity: Toast.TOP,
+            textColor: Colors.greenAccent,
+          );
           referralCode = codeGen();
-          _checkCode(referralCode);
-          HapticFeedback.mediumImpact();
+          displayGenerateButton = false;
+          setState(() {});
+          await _checkCode(referralCode);
+          HapticFeedback.selectionClick();
         },
         child: Text(
           'Generate Code',
@@ -159,17 +146,19 @@ class _ReferralsState extends State<Referrals>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
+              padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
             ),
             PageTitle(),
             Card(
-              color: Colors.black54,
+              color: Colors.black87,
               margin: EdgeInsets.fromLTRB(width * 0.15, 30, width * 0.15, 16),
               elevation: 8,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(15, 16, 0, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 0, 20),
                     child: GestureDetector(
                       onTap: copyButtonEnabled
                           ? () {
@@ -182,7 +171,7 @@ class _ReferralsState extends State<Referrals>
                                 gravity: Toast.TOP,
                                 textColor: Colors.greenAccent,
                               );
-                              HapticFeedback.mediumImpact();
+                              HapticFeedback.selectionClick();
                             }
                           : null,
                       child: Icon(
@@ -194,7 +183,7 @@ class _ReferralsState extends State<Referrals>
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
                       child: AutoSizeText(
                         '$referralCode',
                         maxLines: 1,

@@ -10,16 +10,19 @@ import 'dart:io';
 
 class NetworkStatus extends StatefulWidget {
   @override
-  _NetworkStatusState createState() => new _NetworkStatusState();
+  _NetworkStatusState createState() => _NetworkStatusState();
 }
 
 class _NetworkStatusState extends State<NetworkStatus> {
   var connectivityResult;
   bool isConnected = true;
   bool internetConnected;
-
+  bool toggleLoader = false;
   bool networkAlertActive = false;
-  String status = 'Not Connection!';
+  String status = 'No Connection!';
+
+  double width;
+  double height;
 
   Future<bool> checkInternet() async {
     bool internetStatus;
@@ -30,8 +33,8 @@ class _NetworkStatusState extends State<NetworkStatus> {
         internetStatus = true;
       }
     } on SocketException catch (_) {
-      print('not connected');
       internetStatus = false;
+      networkAlertActive = true;
     }
 
     return internetStatus;
@@ -41,6 +44,10 @@ class _NetworkStatusState extends State<NetworkStatus> {
   void initState() {
     super.initState();
     checkConnectivity();
+  }
+
+  void toggleAlert() {
+    toggleLoader = !toggleLoader;
   }
 
   checkConnectivity() async {
@@ -54,18 +61,13 @@ class _NetworkStatusState extends State<NetworkStatus> {
       isConnected = true;
 
       if (networkAlertActive == true) {
-        networkAlertActive = false;
         status = isConnected == true ? 'Connected' : 'No Connection';
-        Toast.show(
-          'Reconnected!',
-          context,
-          duration: Toast.LENGTH_LONG,
-          gravity: Toast.TOP,
-          textColor: Colors.greenAccent,
-        );
-        HapticFeedback.mediumImpact();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pop(context);
+        setState(() {});
+        Timer(Duration(seconds: 2), () {
+          networkAlertActive = false;
+          toggleLoader = false;
+          setState(() {});
+          // Navigator.pop(context);
         });
       }
     }
@@ -73,59 +75,55 @@ class _NetworkStatusState extends State<NetworkStatus> {
         internetConnected == true) {
       isConnected = true;
       if (networkAlertActive == true) {
-        networkAlertActive = false;
         status = isConnected == true ? 'Connected' : 'No Connection';
+        setState(() {});
+        Timer(Duration(seconds: 2), () {
+          networkAlertActive = false;
+          toggleLoader = false;
+          setState(() {});
 
-        Toast.show(
-          'Reconnected!',
-          context,
-          duration: Toast.LENGTH_LONG,
-          gravity: Toast.TOP,
-          textColor: Colors.greenAccent,
-        );
-        HapticFeedback.mediumImpact();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pop(context);
+          // Navigator.pop(context);
         });
       }
     }
     if (connectivityResult == ConnectivityResult.none ||
         internetConnected == false) {
-      print('Not connected');
-      print(networkAlertActive);
       if (networkAlertActive != true) {}
       isConnected = false;
       status = isConnected == true ? 'Connected' : 'No Connection';
+      toggleLoader = true;
+      setState(() {});
     }
 
-    setState(() {});
-
-    Timer(Duration(seconds: 3), () {
-      checkConnectivity();
+    Timer(Duration(seconds: 1), () async {
+      await checkConnectivity();
+      setState(() {});
     });
   }
 
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+    width = MediaQuery.of(context).size.width;
+    height = MediaQuery.of(context).size.height;
     return Material(
-      color: Colors.transparent,
+      color: Colors.black54,
       child: Visibility(
-        visible: isConnected == true ? false : true,
+        visible: toggleLoader == false ? false : true,
         child: Center(
           child: Container(
-            height: width * 0.5,
+            height: height * 0.30,
             width: width * 0.8,
             decoration: BoxDecoration(
                 shape: BoxShape.rectangle,
                 gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.black87, Colors.black87]),
-                borderRadius: new BorderRadius.all(Radius.circular(5))),
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[Color(0xffffc64c), Color(0xfff817ea)],
+                ),
+                borderRadius: new BorderRadius.all(Radius.circular(15))),
             child: Column(
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
+                  padding: const EdgeInsets.fromLTRB(8, 40, 8, 20),
                   child: Text(
                     status,
                     textAlign: TextAlign.center,
@@ -144,8 +142,8 @@ class _NetworkStatusState extends State<NetworkStatus> {
                         ? Center(
                             child: CircularProgressIndicator(
                               backgroundColor: Color(0xFF3A3A39),
-                              valueColor:
-                                  new AlwaysStoppedAnimation<Color>(kCrimson),
+                              valueColor: new AlwaysStoppedAnimation<Color>(
+                                  Colors.white),
                             ),
                           )
                         : Icon(

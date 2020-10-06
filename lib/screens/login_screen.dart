@@ -1,4 +1,6 @@
 import 'package:carbonetx/data/user_data.dart';
+import 'package:carbonetx/utilities/Gradient_Icon.dart';
+import 'package:carbonetx/utilities/network_Status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +25,7 @@ import 'package:provider/provider.dart';
 import 'package:carbonetx/providers/title_data.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:carbonetx/services/stripe.dart';
+import 'package:carbonetx/utilities/Gradient_Icon.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String id = 'login_screen';
@@ -44,6 +47,10 @@ class _LoginScreenState extends State<LoginScreen>
   String errorMessage;
   bool showSpinner = false;
   String forgotPasswordEmail;
+
+  FocusNode _emailFocus = new FocusNode();
+  FocusNode _passwordFocus = new FocusNode();
+  FocusNode _resetEmailFocus = new FocusNode();
 
   Future _getEmail() async {
     var retrievedEmail = await FlutterKeychain.get(key: "carbonetx_email");
@@ -75,11 +82,29 @@ class _LoginScreenState extends State<LoginScreen>
 
   var _forgotPasswordController = TextEditingController();
 
+  GradientIcon emailIcon = GradientIcon(
+    FontAwesomeIcons.solidEnvelope,
+    24,
+    inactiveIconTheme,
+  );
+
+  GradientIcon passwordIcon = GradientIcon(
+    FontAwesomeIcons.key,
+    24,
+    inactiveIconTheme,
+  );
+
+  Icon resetEmailIcon = Icon(
+    FontAwesomeIcons.solidEnvelope,
+    color: Colors.black,
+    size: 24,
+  );
+
   bool checkEmail() {
     bool validEmail = false;
     if (EmailValidator.validate(forgotPasswordEmail) != true) {
       Toast.show(
-        'Enter a valid e-mail example@example.com',
+        'Invalid e-mail: example@example.com',
         context,
         duration: Toast.LENGTH_LONG,
         gravity: Toast.TOP,
@@ -96,44 +121,54 @@ class _LoginScreenState extends State<LoginScreen>
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: Color(0xFF3A3A39),
+            elevation: 14,
+            backgroundColor: Colors.black54,
             title: Text(
               'Reset Your Password',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
-                color: Colors.white,
+                color: kMagenta,
                 fontFamily: 'OpenSans',
               ),
             ),
-            content: TextField(
-              inputFormatters: [BlacklistingTextInputFormatter(RegExp(r"\s"))],
-              controller: _forgotPasswordController,
-              keyboardType: TextInputType.emailAddress,
-              onChanged: (value) {
-                forgotPasswordEmail = value;
-              },
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'OpenSans',
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+            content: Container(
+              height: 60,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                backgroundBlendMode: BlendMode.hardLight,
+                borderRadius: BorderRadius.circular(10.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white,
+                    blurRadius: 0.0,
+                    offset: Offset(0, 0),
+                  ),
+                ],
               ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 14.0),
-                prefixIcon: Icon(
-                  Icons.email,
-                  color: Colors.white,
+              child: TextField(
+                autocorrect: false,
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r"\s"))
+                ],
+                controller: _forgotPasswordController,
+                keyboardType: TextInputType.emailAddress,
+                onChanged: (value) {
+                  forgotPasswordEmail = value;
+                  HapticFeedback.lightImpact();
+                },
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'OpenSans',
                 ),
-                hintText: "Enter your Email",
-                hintStyle: TextStyle(color: Colors.grey),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black45),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFFF0362)),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(top: 14.0),
+                  prefixIcon: resetEmailIcon,
+                  hintText: "Enter your Email",
+                  hintStyle: kHintTextStyle,
                 ),
               ),
             ),
@@ -189,6 +224,46 @@ class _LoginScreenState extends State<LoginScreen>
     _getEmail();
     _getSession();
     _checkConnectivity();
+    _emailFocus.addListener(_emailFocusChange);
+    _passwordFocus.addListener(_passwordFocusChange);
+    _resetEmailFocus.addListener(_resetEmailFocusChange);
+  }
+
+  _emailFocusChange() {
+    if (_emailFocus.hasFocus) {
+      emailIcon =
+          GradientIcon(FontAwesomeIcons.solidEnvelope, 24, gradientTheme);
+    } else {
+      emailIcon =
+          GradientIcon(FontAwesomeIcons.solidEnvelope, 24, inactiveIconTheme);
+    }
+    setState(() {});
+  }
+
+  _passwordFocusChange() {
+    if (_passwordFocus.hasFocus) {
+      passwordIcon = GradientIcon(FontAwesomeIcons.key, 24, gradientTheme);
+    } else {
+      passwordIcon = GradientIcon(FontAwesomeIcons.key, 24, inactiveIconTheme);
+    }
+    setState(() {});
+  }
+
+  _resetEmailFocusChange() {
+    if (_resetEmailFocus.hasFocus) {
+      resetEmailIcon = Icon(
+        FontAwesomeIcons.solidEnvelope,
+        color: kMagenta,
+        size: 24,
+      );
+    } else {
+      resetEmailIcon = Icon(
+        FontAwesomeIcons.solidEnvelope,
+        color: Colors.grey,
+        size: 24,
+      );
+    }
+    setState(() {});
   }
 
   _checkConnectivity() async {
@@ -230,7 +305,11 @@ class _LoginScreenState extends State<LoginScreen>
             decoration: kBoxDecorationStyle,
             height: 60,
             child: TextField(
-              inputFormatters: [BlacklistingTextInputFormatter(RegExp(r"\s"))],
+              autocorrect: false,
+              focusNode: _emailFocus,
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r"\s"))
+              ],
               controller: _controller,
               keyboardType: TextInputType.emailAddress,
               onChanged: (value) {
@@ -238,21 +317,18 @@ class _LoginScreenState extends State<LoginScreen>
                 HapticFeedback.lightImpact();
               },
               style: TextStyle(
-                color: Colors.black,
+                color: Colors.grey,
                 fontFamily: 'OpenSans',
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.only(top: 14.0),
-                prefixIcon: Icon(
-                  Icons.email,
-                  color: Colors.black54,
-                ),
+                prefixIcon: emailIcon,
                 suffixIcon: IconButton(
                   onPressed: () => _controller.clear(),
                   icon: Icon(Icons.clear),
-                  disabledColor: Colors.black,
-                  highlightColor: Colors.black,
+                  disabledColor: kMagenta,
+                  highlightColor: kMagenta,
                 ),
                 hintText: "Enter your Email",
                 hintStyle: kHintTextStyle,
@@ -278,6 +354,8 @@ class _LoginScreenState extends State<LoginScreen>
           decoration: kBoxDecorationStyle,
           height: 60.0,
           child: TextField(
+            autocorrect: false,
+            focusNode: _passwordFocus,
             controller: _passwordController,
             obscureText: true,
             onChanged: (value) {
@@ -285,19 +363,15 @@ class _LoginScreenState extends State<LoginScreen>
               HapticFeedback.lightImpact();
             },
             style: TextStyle(
-              color: Colors.black,
+              color: Colors.grey,
               fontFamily: 'OpenSans',
             ),
             decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.only(top: 14.0),
-              prefixIcon: Icon(
-                Icons.lock,
-                color: Colors.black54,
-              ),
-              hintText: 'Enter your Password',
-              hintStyle: kHintTextStyle,
-            ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(top: 14.0),
+                prefixIcon: passwordIcon,
+                hintText: 'Enter your Password',
+                hintStyle: TextStyle(color: Colors.grey)),
           ),
         ),
       ],
@@ -330,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen>
         elevation: 5.0,
         onPressed: () async {
           print('Login Button Pressed');
-          HapticFeedback.mediumImpact();
+          HapticFeedback.selectionClick();
           if (mounted)
             setState(() {
               showSpinner = true;
@@ -343,17 +417,19 @@ class _LoginScreenState extends State<LoginScreen>
               await FlutterKeychain.put(key: "carbonetx_email", value: email);
               await FlutterKeychain.put(
                   key: "carbonetx_password", value: password);
-              password = null;
-              await UserData().getData(userLoggedIn.user.uid);
-              Navigator.push(context, SlideRoute(widget: DashboardScreen()));
-              _passwordController.clear();
-              Toast.show(
-                'Login successful!',
-                context,
-                duration: Toast.LENGTH_LONG,
-                gravity: Toast.TOP,
-                textColor: Colors.greenAccent,
-              );
+
+              var userLoggedIn = await UserData().loadUserProfile();
+              if (userLoggedIn != null) {
+                Navigator.push(context, SlideRoute(widget: DashboardScreen()));
+                _passwordController.clear();
+                Toast.show(
+                  'Login successful!',
+                  context,
+                  duration: Toast.LENGTH_LONG,
+                  gravity: Toast.TOP,
+                  textColor: Colors.greenAccent,
+                );
+              }
             }
             if (mounted)
               setState(() {
@@ -382,11 +458,11 @@ class _LoginScreenState extends State<LoginScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30.0),
         ),
-        color: Colors.white,
+        color: Colors.black87,
         child: Text(
           'LOGIN',
           style: TextStyle(
-            color: Colors.black54,
+            foreground: Paint()..shader = linearGradient,
             letterSpacing: 1.5,
             fontSize: 18.0,
             fontWeight: FontWeight.bold,
@@ -410,18 +486,29 @@ class _LoginScreenState extends State<LoginScreen>
             TextSpan(
               text: 'Don\'t have an Account? ',
               style: TextStyle(
-                color: kLightContrast,
+                color: kLightTheme,
                 fontSize: 18.0,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.bold,
               ),
             ),
             TextSpan(
               text: 'Sign Up',
               style: TextStyle(
-                color: kLightContrast,
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
-              ),
+                  foreground: Paint()..shader = linearGradient,
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                  shadows: <Shadow>[
+                    Shadow(
+                      offset: Offset(0, 0),
+                      blurRadius: 2.0,
+                      color: Colors.black,
+                    ),
+                    Shadow(
+                      offset: Offset(0, 0),
+                      blurRadius: 2.0,
+                      color: Colors.black,
+                    ),
+                  ]),
             ),
           ],
         ),
@@ -432,12 +519,14 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _appLogo() {
     return Container(
       margin: EdgeInsets.fromLTRB(0, 10, 0, 5),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(140, 100, 140, 20),
-        child: Image.asset(
-          'images/carbonEtxLogo.png',
-          width: 100,
-          alignment: Alignment.bottomCenter,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+          child: Image.asset(
+            'images/sheenobiLogo.png',
+            width: 400,
+            alignment: Alignment.bottomCenter,
+          ),
         ),
       ),
     );
@@ -451,14 +540,13 @@ class _LoginScreenState extends State<LoginScreen>
           height: double.infinity,
           width: double.infinity,
           decoration: kAppBackground,
-          child: _appLogo(),
         ),
         Scaffold(
           backgroundColor: Colors.transparent,
           body: ModalProgressHUD(
             progressIndicator: CircularProgressIndicator(
               backgroundColor: Color(0xFF3A3A39),
-              valueColor: new AlwaysStoppedAnimation<Color>(kCrimson),
+              valueColor: new AlwaysStoppedAnimation<Color>(kMagenta),
             ),
             inAsyncCall: showSpinner,
             color: Colors.black,
@@ -487,7 +575,7 @@ class _LoginScreenState extends State<LoginScreen>
                               Text(
                                 'Login',
                                 style: TextStyle(
-                                  color: kLightContrast,
+                                  color: kLightTheme,
                                   fontFamily: 'OpenSans',
                                   fontSize: 30.0,
                                   fontWeight: FontWeight.bold,
@@ -502,6 +590,7 @@ class _LoginScreenState extends State<LoginScreen>
                               _buildForgotPasswordBtn(),
                               _buildLoginBtn(),
                               _buildSignupBtn(),
+                              _appLogo(),
                             ],
                           ),
                         ),
@@ -513,6 +602,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
         ),
+        NetworkStatus(),
       ],
     );
   }

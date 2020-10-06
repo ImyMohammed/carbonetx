@@ -46,9 +46,9 @@ class _DropByScheduledState extends State<DropByScheduled>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.fromLTRB(0, 70, 0, 0),
+              padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
             ),
-            PageTitle(),
+            Center(child: Text('Drops Scheduled', style: kPageTitle)),
           ],
         ),
       ),

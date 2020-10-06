@@ -1,3 +1,4 @@
+import 'package:carbonetx/constants/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,31 +11,34 @@ class CustomerDashboardData extends ChangeNotifier {
   bool pageFiveActive = false;
 
   bool profileWarning = true;
+  bool cardWarning = true;
+
+  bool cardChange = false;
 
   Color activeColor = Color(0xFF00A6FF);
-  Color inactiveColor = Colors.white;
+  Color inactiveColor = Colors.grey;
 
   Color pageOneColor = Color(0xFF00A6FF);
-  Color pageTwoColor = Colors.white;
-  Color pageThreeColor = Colors.white;
-  Color pageFourColor = Colors.white;
-  Color pageFiveColor = Colors.white;
+  Color pageTwoColor = Colors.grey;
+  Color pageThreeColor = Colors.grey;
+  Color pageFourColor = Colors.grey;
+  Color pageFiveColor = Colors.grey;
 
   var pageList = [true, false, false, false, false];
 
   var colors = [
-    Color(0xFF00A6FF),
-    Colors.white,
-    Colors.white,
-    Colors.white,
-    Colors.white
+    gradientTheme,
+    inactiveIconTheme,
+    inactiveIconTheme,
+    inactiveIconTheme,
+    inactiveIconTheme
   ];
 
   void changeStatus(int index) {
     for (int i = 0; i <= 4; i++) {
-      colors[i] = inactiveColor;
+      colors[i] = inactiveIconTheme;
     }
-    colors[index] = activeColor;
+    colors[index] = gradientTheme;
 
     notifyListeners();
   }
@@ -51,6 +55,21 @@ class CustomerDashboardData extends ChangeNotifier {
 
   void profileWarningOn() {
     profileWarning = true;
+    notifyListeners();
+  }
+
+  void cardWarningOff() {
+    cardWarning = false;
+    notifyListeners();
+  }
+
+  void cardWarningOn() {
+    cardWarning = true;
+    notifyListeners();
+  }
+
+  void cardChanged() {
+    cardChange = true;
     notifyListeners();
   }
 }
